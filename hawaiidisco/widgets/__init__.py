@@ -1,0 +1,1 @@
+"""Hawaii Disco widgets module."""

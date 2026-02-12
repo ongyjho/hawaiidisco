@@ -1,0 +1,29 @@
+# Language: en (English) | ko (Korean)
+language: en
+
+# Theme: textual-dark, nord, gruvbox, catppuccin-mocha, dracula,
+#         tokyo-night, monokai, textual-light, solarized-light, ...
+theme: textual-dark
+
+# AI provider configuration
+ai:
+  provider: claude_cli  # claude_cli | anthropic | openai
+  api_key: ""           # Leave empty to use environment variable (ANTHROPIC_API_KEY, OPENAI_API_KEY)
+  model: ""             # Leave empty for provider default
+
+feeds:
+  - url: https://feeds.feedburner.com/geeknews-feed
+    name: GeekNews
+  - url: https://hnrss.org/frontpage
+    name: HackerNews
+
+# Refresh interval (minutes)
+refresh_interval: 30
+
+# AI insight generation
+insight:
+  enabled: true
+  mode: manual  # auto | manual
+
+# Bookmark markdown save path
+bookmark_dir: ~/.local/share/hawaiidisco/bookmarks
