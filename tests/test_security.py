@@ -123,10 +123,21 @@ class TestSSLFallback:
         """에러 메시지에 예외 클래스명만 노출되는지 확인."""
         from hawaiidisco.reader import fetch_article_text
         set_lang("en")
-        # 존재하지 않는 호스트로 요청
+        # 존재하지 않는 호스트로 요청 (insecure fallback 비활성)
         result = fetch_article_text("https://this-host-does-not-exist.invalid", timeout=2)
         # 예외 스택트레이스나 상세 메시지 대신 클래스명만 포함
         assert "Traceback" not in result
+        assert "Could not fetch page" in result
+
+    def test_insecure_ssl_disabled_by_default(self) -> None:
+        """allow_insecure_ssl=False일 때 SSL 실패 시 insecure fallback을 시도하지 않는다."""
+        from hawaiidisco.reader import fetch_article_text
+        set_lang("en")
+        result = fetch_article_text(
+            "https://this-host-does-not-exist.invalid",
+            timeout=2,
+            allow_insecure_ssl=False,
+        )
         assert "Could not fetch page" in result
 
 
@@ -191,3 +202,77 @@ class TestDirectoryPermissions:
         # 소유자만 rwx
         assert oct(db_dir.stat().st_mode & 0o777) == "0o700"
         assert oct(bm_dir.stat().st_mode & 0o777) == "0o700"
+
+
+# --- DB 파일 권한 ---
+
+
+class TestDatabaseFilePermissions:
+    def test_db_file_permission_600(self, tmp_path: Path) -> None:
+        """DB 파일이 소유자만 읽기/쓰기 가능하도록 0o600으로 설정되는지 확인."""
+        db_path = tmp_path / "test.db"
+        db = Database(db_path)
+        db.close()
+        assert oct(db_path.stat().st_mode & 0o777) == "0o600"
+
+
+# --- OPML 파일 크기 제한 ---
+
+
+class TestOpmlSizeLimit:
+    def test_large_opml_rejected(self, tmp_path: Path) -> None:
+        """1 MB보다 큰 OPML 파일은 거부된다."""
+        from hawaiidisco.opml import parse_opml
+
+        large_file = tmp_path / "large.opml"
+        large_file.write_text("x" * 2_000_000)
+        with pytest.raises(ValueError, match="too large"):
+            parse_opml(large_file)
+
+
+# --- OPML URL scheme 검증 ---
+
+
+class TestOpmlUrlSchemeValidation:
+    def test_non_http_urls_filtered(self, tmp_path: Path) -> None:
+        """OPML에서 http/https가 아닌 URL은 무시된다."""
+        from hawaiidisco.opml import parse_opml
+
+        opml_content = """<?xml version="1.0" encoding="UTF-8"?>
+<opml version="2.0">
+  <head><title>Test</title></head>
+  <body>
+    <outline type="rss" text="Good" xmlUrl="https://example.com/feed.xml" />
+    <outline type="rss" text="Bad" xmlUrl="file:///etc/passwd" />
+    <outline type="rss" text="Bad2" xmlUrl="ftp://evil.com/feed" />
+    <outline type="rss" text="Bad3" xmlUrl="javascript:alert(1)" />
+  </body>
+</opml>"""
+        opml_file = tmp_path / "test.opml"
+        opml_file.write_text(opml_content)
+        feeds = parse_opml(opml_file)
+        assert len(feeds) == 1
+        assert feeds[0].url == "https://example.com/feed.xml"
+
+
+# --- Config allow_insecure_ssl 기본값 ---
+
+
+class TestConfigAllowInsecureSsl:
+    def test_default_is_false(self, tmp_path: Path) -> None:
+        """allow_insecure_ssl 기본값이 False인지 확인."""
+        from hawaiidisco.config import load_config
+
+        config_file = tmp_path / "config.yml"
+        config_file.write_text("language: en\n")
+        config = load_config(config_file)
+        assert config.allow_insecure_ssl is False
+
+    def test_explicit_true(self, tmp_path: Path) -> None:
+        """allow_insecure_ssl을 true로 설정할 수 있는지 확인."""
+        from hawaiidisco.config import load_config
+
+        config_file = tmp_path / "config.yml"
+        config_file.write_text("language: en\nallow_insecure_ssl: true\n")
+        config = load_config(config_file)
+        assert config.allow_insecure_ssl is True
