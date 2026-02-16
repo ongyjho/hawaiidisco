@@ -7,10 +7,7 @@
 [![CI](https://github.com/ongyjho/hawaii-disco/actions/workflows/ci.yml/badge.svg)](https://github.com/ongyjho/hawaii-disco/actions/workflows/ci.yml)
 [![PyPI](https://img.shields.io/pypi/v/hawaiidisco)](https://pypi.org/project/hawaiidisco/)
 
-<!--
-TODO: Add screenshot and uncomment below
-![Hawaii Disco Screenshot](docs/screenshot.png)
--->
+![Hawaii Disco Demo](docs/demo.gif)
 
 Hawaii Disco is a terminal RSS reader that doesn't just show you articles — it reads alongside you. With built-in AI, it generates sharp insights, translates foreign articles, and analyzes your bookmark patterns, turning passive reading into active discovery.
 
@@ -292,7 +289,7 @@ Contributions are welcome! Please follow these steps:
 ## Roadmap
 
 - [ ] OPML import/export
-- [ ] Demo screenshot / GIF
+- [x] Demo screenshot / GIF
 - [ ] Plugin system
 - [ ] Additional AI providers (Gemini, Ollama, etc.)
 - [ ] More languages (Japanese, etc.)
