@@ -35,9 +35,9 @@ all = ["anthropic>=0.30", "openai>=1.0"]
 dev = ["pytest>=8.0", "ruff>=0.4"]
 
 [project.urls]
-Homepage = "https://github.com/ongyjho/hawaii-disco"
-Repository = "https://github.com/ongyjho/hawaii-disco"
-Issues = "https://github.com/ongyjho/hawaii-disco/issues"
+Homepage = "https://github.com/ongyjho/hawaiidisco"
+Repository = "https://github.com/ongyjho/hawaiidisco"
+Issues = "https://github.com/ongyjho/hawaiidisco/issues"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

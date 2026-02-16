@@ -65,4 +65,4 @@ New columns added in `Database._migrate()` (not schema init). Migrations run aut
 ## Remotes
 
 - `origin`: `whale-millie/hd.git` (private)
-- `public`: `ongyjho/hawaii-disco.git` (public, PyPI source)
+- `public`: `ongyjho/hawaiidisco.git` (public, PyPI source)
