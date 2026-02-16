@@ -27,3 +27,7 @@ insight:
 
 # Bookmark markdown save path
 bookmark_dir: ~/.local/share/hawaiidisco/bookmarks
+
+# Allow insecure SSL connections (disable certificate verification as fallback)
+# WARNING: Only enable this if you trust the feeds and understand the security risks
+allow_insecure_ssl: false

@@ -1,6 +1,7 @@
 """SQLite database management."""
 from __future__ import annotations
 
+import os
 import sqlite3
 import threading
 from dataclasses import dataclass
@@ -59,6 +60,12 @@ class Database:
         conn.executescript(SCHEMA_SQL)
         self._migrate(conn)
         conn.commit()
+        # Restrict database file to owner-only access
+        if str(db_path) != ":memory:":
+            try:
+                os.chmod(db_path, 0o600)
+            except OSError:
+                pass
 
     def _get_conn(self) -> sqlite3.Connection:
         """Return a thread-local database connection."""

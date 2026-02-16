@@ -87,17 +87,19 @@ def _urlopen(url: str, timeout: int, ctx: ssl.SSLContext | None = None) -> str:
         return resp.read().decode(charset, errors="replace")
 
 
-def fetch_article_text(url: str, timeout: int = 15) -> str:
+def fetch_article_text(url: str, timeout: int = 15, *, allow_insecure_ssl: bool = False) -> str:
     """Extract body text from the given URL."""
-    # 정상 SSL 검증 시도 후 실패 시 검증 비활성화 폴백
     try:
         html = _urlopen(url, timeout)
     except Exception as first_err:
-        logger.debug("첫 번째 시도 실패 (%s), SSL 비활성화로 재시도: %s", first_err, url)
+        if not allow_insecure_ssl:
+            logger.debug("Fetch failed (%s): %s", first_err, url)
+            return t("fetch_error", error=type(first_err).__name__)
+        logger.warning("SSL verification failed for %s, retrying without verification", url)
         try:
             html = _urlopen(url, timeout, ctx=_make_insecure_context())
         except Exception as e:
-            logger.debug("폴백도 실패: %s", e)
+            logger.debug("Insecure fallback also failed: %s", e)
             return t("fetch_error", error=type(e).__name__)
 
     extractor = _TextExtractor()

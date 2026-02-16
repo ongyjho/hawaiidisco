@@ -215,6 +215,8 @@ class ArticleScreen(ModalScreen):
         self.app.pop_screen()
 
     def action_open_browser(self) -> None:
+        if not self._link.startswith(("http://", "https://")):
+            return
         import webbrowser as wb
         wb.open(self._link)
 
@@ -972,7 +974,7 @@ class HawaiiDiscoApp(App):
         status = self.query_one(StatusBar)
         self.call_from_thread(status.set_message, t("refreshing"))
 
-        new_count = fetch_all_feeds(self.config.feeds, self.db)
+        new_count = fetch_all_feeds(self.config.feeds, self.db, allow_insecure_ssl=self.config.allow_insecure_ssl)
         now = datetime.now()
 
         if new_count > 0:
@@ -1036,12 +1038,12 @@ class HawaiiDiscoApp(App):
 
     @work(thread=True)
     def _fetch_full_article(self, url: str, screen: ArticleScreen) -> None:
-        text = fetch_article_text(url)
+        text = fetch_article_text(url, allow_insecure_ssl=self.config.allow_insecure_ssl)
         self.call_from_thread(screen.update_body, text)
 
     def action_open_browser(self) -> None:
         article = self._get_current_article()
-        if article:
+        if article and article.link.startswith(("http://", "https://")):
             self.db.mark_read(article.id)
             webbrowser.open(article.link)
             self._reload_articles()

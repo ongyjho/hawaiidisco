@@ -23,15 +23,16 @@ classifiers = [
     "Topic :: Internet :: WWW/HTTP :: Dynamic Content :: News/Diary",
 ]
 dependencies = [
-    "textual>=0.85.0",
-    "feedparser>=6.0",
-    "pyyaml>=6.0",
+    "textual>=0.85.0,<2.0",
+    "feedparser>=6.0,<7.0",
+    "pyyaml>=6.0,<7.0",
+    "defusedxml>=0.7,<1.0",
 ]
 
 [project.optional-dependencies]
-anthropic = ["anthropic>=0.30"]
-openai = ["openai>=1.0"]
-all = ["anthropic>=0.30", "openai>=1.0"]
+anthropic = ["anthropic>=0.30,<2.0"]
+openai = ["openai>=1.0,<3.0"]
+all = ["anthropic>=0.30,<2.0", "openai>=1.0,<3.0"]
 dev = ["pytest>=8.0", "ruff>=0.4"]
 
 [project.urls]

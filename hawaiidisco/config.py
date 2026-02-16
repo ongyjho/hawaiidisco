@@ -12,9 +12,9 @@ from hawaiidisco.i18n import set_lang
 
 
 CONFIG_PATH = Path("~/.config/hawaiidisco/config.yml").expanduser()
-# Seed config.yml bundled with the package (for development)
+# Seed config bundled with the package (for development)
 _PACKAGE_DIR = Path(__file__).resolve().parent.parent
-_SEED_CONFIG = _PACKAGE_DIR / "config.yml"
+_SEED_CONFIG = _PACKAGE_DIR / "config.example.yml"
 
 
 @dataclass
@@ -46,6 +46,7 @@ class Config:
     insight: InsightConfig = field(default_factory=InsightConfig)
     bookmark_dir: Path = Path("~/.local/share/hawaiidisco/bookmarks")
     db_path: Path = Path("~/.local/share/hawaiidisco/hawaiidisco.db")
+    allow_insecure_ssl: bool = False
 
 
 def _resolve_env(value: str) -> str:
@@ -111,6 +112,7 @@ def load_config(path: Path | None = None) -> Config:
         insight=insight,
         bookmark_dir=bookmark_dir,
         db_path=Path("~/.local/share/hawaiidisco/hawaiidisco.db").expanduser(),
+        allow_insecure_ssl=raw.get("allow_insecure_ssl", False),
     )
     return config
 

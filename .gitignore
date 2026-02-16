@@ -25,6 +25,9 @@ htmlcov/
 .env
 .env.*
 
+# User config (may contain API keys)
+config.yml
+
 # Database
 *.db
 

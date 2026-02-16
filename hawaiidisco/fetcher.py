@@ -49,11 +49,11 @@ def _parse_published(entry: dict) -> datetime | None:
     return None
 
 
-def fetch_feed(feed_config: FeedConfig, db: Database) -> int:
+def fetch_feed(feed_config: FeedConfig, db: Database, *, allow_insecure_ssl: bool = False) -> int:
     """Fetch a single feed and store it in the database. Return the number of new articles."""
-    # Try default first; fall back to SSL bypass on failure
     parsed = feedparser.parse(feed_config.url, agent=USER_AGENT)
-    if parsed.bozo and not parsed.entries:
+    if parsed.bozo and not parsed.entries and allow_insecure_ssl:
+        logger.warning("SSL verification failed for %s, retrying without verification", feed_config.url)
         parsed = feedparser.parse(
             feed_config.url,
             agent=USER_AGENT,
@@ -87,12 +87,12 @@ def fetch_feed(feed_config: FeedConfig, db: Database) -> int:
     return new_count
 
 
-def fetch_all_feeds(feeds: list[FeedConfig], db: Database) -> int:
+def fetch_all_feeds(feeds: list[FeedConfig], db: Database, *, allow_insecure_ssl: bool = False) -> int:
     """Fetch all feeds. Return the total number of new articles."""
     total_new = 0
     for feed_config in feeds:
         try:
-            total_new += fetch_feed(feed_config, db)
+            total_new += fetch_feed(feed_config, db, allow_insecure_ssl=allow_insecure_ssl)
         except Exception:
             logger.debug("피드 가져오기 실패: %s", feed_config.url, exc_info=True)
             continue
