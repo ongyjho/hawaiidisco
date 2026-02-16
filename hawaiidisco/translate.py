@@ -4,8 +4,6 @@ from __future__ import annotations
 import logging
 
 from hawaiidisco.ai.base import AIProvider
-
-logger = logging.getLogger(__name__)
 from hawaiidisco.ai.prompts import (
     TRANSLATE_BODY_PROMPT,
     TRANSLATE_META_PROMPT,
@@ -15,6 +13,8 @@ from hawaiidisco.ai.prompts import (
     get_lang_name,
 )
 from hawaiidisco.i18n import get_lang, t
+
+logger = logging.getLogger(__name__)
 
 
 def translate_text(text: str, provider: AIProvider, *, timeout: int = 60, lang: str = "") -> str | None:

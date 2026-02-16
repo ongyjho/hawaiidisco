@@ -2,10 +2,9 @@
 from __future__ import annotations
 
 import re
-import unicodedata
 from pathlib import Path
 
-from hawaiidisco.db import Article, Database
+from hawaiidisco.db import Article
 from hawaiidisco.i18n import t
 
 

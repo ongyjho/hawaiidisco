@@ -6,7 +6,7 @@ from pathlib import Path
 import pytest
 import yaml
 
-from hawaiidisco.config import AIConfig, Config, load_config, _resolve_env, remove_feed, CONFIG_PATH
+from hawaiidisco.config import load_config, _resolve_env, remove_feed
 from hawaiidisco.i18n import get_lang, Lang
 
 

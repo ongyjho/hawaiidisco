@@ -4,10 +4,7 @@ from __future__ import annotations
 from datetime import datetime
 from unittest.mock import MagicMock
 
-import pytest
-
 from textual import events
-from textual.widgets import ListView
 
 from hawaiidisco.db import Article
 from hawaiidisco.widgets.timeline import ArticleItem, Timeline
@@ -58,8 +55,6 @@ class TestArticleItemClick:
 
         # 두 번째 항목 클릭
         index_values = []
-        original_index = None
-
         def mock_set_index(val):
             index_values.append(val)
 
@@ -77,7 +72,7 @@ class TestRefreshArticlesPreservesHighlight:
     def test_refresh_preserves_article_id(self) -> None:
         """갱신 후 같은 article ID의 위치로 인덱스가 복원된다."""
         articles = [_make_article(f"a-{i}") for i in range(5)]
-        timeline = Timeline(articles)
+        Timeline(articles)
 
         # highlighted_child와 index를 시뮬레이션하기 위해 내부 상태 직접 설정
         # Timeline이 마운트되지 않은 상태에서는 _nodes가 비어 있으므로

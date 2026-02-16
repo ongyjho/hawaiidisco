@@ -108,7 +108,6 @@ class TestTranslationEdgeCases:
 
     def test_all_format_keys_produce_valid_output(self) -> None:
         """format 인자가 필요한 모든 키가 올바르게 치환된다."""
-        from hawaiidisco.i18n import _STRINGS
         # format 인자가 필요한 키와 인자 매핑
         format_keys = {
             "new_articles_found": {"count": 10},

@@ -3,8 +3,6 @@ from __future__ import annotations
 
 from datetime import datetime
 
-import pytest
-
 from hawaiidisco.config import FeedConfig
 from hawaiidisco.db import Article
 from hawaiidisco.app import FeedItem, FeedListScreen, BookmarkItem, BookmarkListScreen, TagItem

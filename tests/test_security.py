@@ -1,15 +1,12 @@
 """보안 수정사항에 대한 테스트."""
 from __future__ import annotations
 
-import os
-import sqlite3
 from pathlib import Path
-from unittest.mock import patch
 
 import pytest
 
-from hawaiidisco.bookmark import _safe_path, _slugify, save_bookmark_md, delete_bookmark_md
-from hawaiidisco.db import Article, Database
+from hawaiidisco.bookmark import _safe_path, _slugify
+from hawaiidisco.db import Database
 from hawaiidisco.i18n import set_lang
 
 

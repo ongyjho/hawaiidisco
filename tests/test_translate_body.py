@@ -94,7 +94,7 @@ class TestTranslateTextTimeout:
         """공백만 있는 텍스트는 falsy이므로 None 반환."""
         provider = _make_mock_provider()
         # "   " is truthy in Python, so this should call generate
-        result = translate_text("   ", provider, lang="ko")
+        translate_text("   ", provider, lang="ko")
         # 공백 문자열은 truthy이므로 번역 시도됨
         assert provider.generate.called
 
