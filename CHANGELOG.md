@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.2.2](https://github.com/ongyjho/hawaiidisco/compare/v0.2.1...v0.2.2) (2026-02-17)
+
+
+### Bug Fixes
+
+* remove duplicate force-include causing PyPI upload failure ([d70eee3](https://github.com/ongyjho/hawaiidisco/commit/d70eee310daf67601d752741668df4cbb246c5e2))
+* remove duplicate force-include causing PyPI upload failure ([fdfd40f](https://github.com/ongyjho/hawaiidisco/commit/fdfd40f620ceb44d578f0eb94a4e888b155427d7))
+
+
+### Miscellaneous
+
+* **main:** release 0.2.1 ([4af5d53](https://github.com/ongyjho/hawaiidisco/commit/4af5d53310b3661553f27b1ca4942a9fda3c6a62))
+* **main:** release 0.2.1 ([c918e89](https://github.com/ongyjho/hawaiidisco/commit/c918e896d374c01b097fa422f25762603040ab35))
+
 ## [0.2.1](https://github.com/ongyjho/hawaiidisco/compare/v0.2.0...v0.2.1) (2026-02-17)
 
 
