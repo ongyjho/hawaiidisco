@@ -41,12 +41,12 @@ def _make_mock_provider(available: bool = True, output: str = "번역 결과") -
 class TestTranslateTextTimeout:
     """Tests for translate_text timeout parameter."""
 
-    def test_default_timeout_is_60(self) -> None:
-        """Default timeout is 60 seconds."""
+    def test_default_timeout_is_120(self) -> None:
+        """Default timeout is 120 seconds."""
         provider = _make_mock_provider()
         translate_text("hello world", provider, lang="ko")
         _, kwargs = provider.generate.call_args
-        assert kwargs["timeout"] == 60
+        assert kwargs["timeout"] == 120
 
     def test_custom_timeout(self) -> None:
         """Custom timeout is passed through."""

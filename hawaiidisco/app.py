@@ -1528,7 +1528,7 @@ class HawaiiDiscoApp(App):
                 return
 
         # Generate translation
-        translated = translate_text(screen._body, self.ai, timeout=60)
+        translated = translate_text(screen._body, self.ai)
         if translated:
             # Save to DB
             if article_id:
