@@ -307,6 +307,61 @@ class TestDigestFlow:
         assert content == "Bookmarked digest"
         assert count == 2
 
+    def test_digest_invalidated_on_bookmark_change(self, db: Database) -> None:
+        """Cached digest should be invalidated when bookmarks change."""
+        for i in range(3):
+            db.upsert_article(
+                f"inv-{i}", "Feed", f"Title {i}", f"https://x.com/{i}", "desc", datetime.now()
+            )
+        db.toggle_bookmark("inv-0")
+        db.toggle_bookmark("inv-1")
+
+        provider = _mock_provider("Digest v1")
+        config = DigestConfig(enabled=True, period_days=7, bookmarked_only=True)
+
+        content, count = get_or_generate_digest(db, provider, config)
+        assert content == "Digest v1"
+        assert count == 2
+        assert provider.generate.call_count == 1
+
+        # Same bookmarks → cache hit
+        content2, _ = get_or_generate_digest(db, provider, config)
+        assert content2 == "Digest v1"
+        assert provider.generate.call_count == 1
+
+        # Add a new bookmark → cache should be invalidated
+        db.toggle_bookmark("inv-2")
+        provider.generate.return_value = "Digest v2"
+
+        content3, count3 = get_or_generate_digest(db, provider, config)
+        assert content3 == "Digest v2"
+        assert count3 == 3
+        assert provider.generate.call_count == 2
+
+    def test_digest_invalidated_on_new_articles(self, db: Database) -> None:
+        """Cached digest should be invalidated when new articles appear."""
+        for i in range(3):
+            db.upsert_article(
+                f"new-{i}", "Feed", f"Title {i}", f"https://x.com/{i}", "desc", datetime.now()
+            )
+
+        provider = _mock_provider("Digest v1")
+        config = DigestConfig(enabled=True, period_days=7)
+
+        content, count = get_or_generate_digest(db, provider, config)
+        assert content == "Digest v1"
+        assert count == 3
+        assert provider.generate.call_count == 1
+
+        # Add new article → cache should be invalidated
+        db.upsert_article("new-3", "Feed", "Title 3", "https://x.com/3", "desc", datetime.now())
+        provider.generate.return_value = "Digest v2"
+
+        content2, count2 = get_or_generate_digest(db, provider, config)
+        assert content2 == "Digest v2"
+        assert count2 == 4
+        assert provider.generate.call_count == 2
+
 
 class TestConfigBootstrapFlow:
     """Config load → ensure_dirs → directory creation."""

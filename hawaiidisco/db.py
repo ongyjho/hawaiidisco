@@ -16,6 +16,7 @@ class Digest:
     period_days: int
     article_count: int
     content: str
+    article_ids_hash: str = ""
 
 
 @dataclass
@@ -117,6 +118,11 @@ class Database:
             "CREATE INDEX IF NOT EXISTS idx_articles_read "
             "ON articles(is_read, published_at DESC)"
         )
+        # Digest table migrations
+        digest_cols = {row[1] for row in conn.execute("PRAGMA table_info(digests)").fetchall()}
+        if "article_ids_hash" not in digest_cols:
+            conn.execute("ALTER TABLE digests ADD COLUMN article_ids_hash TEXT DEFAULT ''")
+
 
     def close(self) -> None:
         conn = getattr(self._local, "conn", None)
@@ -383,11 +389,14 @@ class Database:
 
     # --- Digest Operations ---
 
-    def save_digest(self, period_days: int, article_count: int, content: str) -> int:
+    def save_digest(
+        self, period_days: int, article_count: int, content: str, article_ids_hash: str = ""
+    ) -> int:
         """Save a digest and return its ID."""
         cursor = self._get_conn().execute(
-            "INSERT INTO digests (period_days, article_count, content) VALUES (?, ?, ?)",
-            (period_days, article_count, content),
+            "INSERT INTO digests (period_days, article_count, content, article_ids_hash) "
+            "VALUES (?, ?, ?, ?)",
+            (period_days, article_count, content, article_ids_hash),
         )
         self._get_conn().commit()
         return cursor.lastrowid  # type: ignore[return-value]
@@ -406,6 +415,7 @@ class Database:
             period_days=row["period_days"],
             article_count=row["article_count"],
             content=row["content"],
+            article_ids_hash=row["article_ids_hash"] or "",
         )
 
     def get_recent_articles(self, days: int = 7, limit: int = 20) -> list[Article]:
