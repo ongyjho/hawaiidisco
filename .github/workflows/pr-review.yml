@@ -17,6 +17,14 @@ jobs:
       pull-requests: write
       issues: write
     steps:
+      - name: React to comment
+        if: github.event_name == 'issue_comment'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh api repos/${{ github.repository }}/issues/comments/${{ github.event.comment.id }}/reactions \
+            -f content=eyes
+
       - name: Check for API key
         id: check
         env:
@@ -63,6 +71,14 @@ jobs:
         run: |
           gh pr comment "${{ steps.pr.outputs.number }}" \
             --body-file /tmp/review_body.txt
+
+      - name: React review done
+        if: steps.check.outputs.skip != 'true' && github.event_name == 'issue_comment'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh api repos/${{ github.repository }}/issues/comments/${{ github.event.comment.id }}/reactions \
+            -f content=rocket
 
       - name: Create issues from suggestions
         if: steps.check.outputs.skip != 'true'
