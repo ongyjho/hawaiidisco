@@ -1,6 +1,7 @@
 """AI-powered article digest generation."""
 from __future__ import annotations
 
+import hashlib
 from datetime import datetime, timedelta
 
 from hawaiidisco.ai.base import AIProvider
@@ -13,6 +14,12 @@ from hawaiidisco.ai.prompts import (
 from hawaiidisco.config import DigestConfig
 from hawaiidisco.db import Article, Database
 from hawaiidisco.i18n import get_lang, t
+
+
+def _compute_article_hash(articles: list[Article]) -> str:
+    """Compute a SHA256 hash of sorted article IDs for cache invalidation."""
+    ids = sorted(a.id for a in articles)
+    return hashlib.sha256(",".join(ids).encode()).hexdigest()
 
 
 def generate_digest(
@@ -56,14 +63,7 @@ def get_or_generate_digest(
 
     Returns (content, article_count). Raises ValueError if no articles found.
     """
-    # Check for a fresh cached digest (less than 1 day old)
-    cached = db.get_latest_digest(config.period_days)
-    if cached:
-        age = datetime.now() - cached.created_at
-        if age < timedelta(days=1):
-            return cached.content, cached.article_count
-
-    # Fetch recent articles
+    # Fetch current articles first (needed for both cache check and generation)
     if config.bookmarked_only:
         articles = db.get_recent_bookmarked_articles(config.period_days)
         articles = articles[: config.max_articles]
@@ -73,11 +73,20 @@ def get_or_generate_digest(
     if not articles:
         raise ValueError(t("no_recent_articles_for_digest"))
 
+    current_hash = _compute_article_hash(articles)
+
+    # Check for a fresh cached digest (less than 1 day old) with matching articles
+    cached = db.get_latest_digest(config.period_days)
+    if cached:
+        age = datetime.now() - cached.created_at
+        if age < timedelta(days=1) and cached.article_ids_hash == current_hash:
+            return cached.content, cached.article_count
+
     content = generate_digest(articles, provider, config.period_days)
     if not content:
         raise ValueError(t("digest_generation_failed"))
 
-    # Save to DB
-    db.save_digest(config.period_days, len(articles), content)
+    # Save to DB with article hash for future cache validation
+    db.save_digest(config.period_days, len(articles), content, current_hash)
 
     return content, len(articles)
