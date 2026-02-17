@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.0](https://github.com/ongyjho/hawaiidisco/compare/v0.3.2...v0.4.0) (2026-02-17)
+
+
+### Features
+
+* invalidate digest cache when bookmarks or articles change ([#33](https://github.com/ongyjho/hawaiidisco/issues/33)) ([#34](https://github.com/ongyjho/hawaiidisco/issues/34)) ([f7c779a](https://github.com/ongyjho/hawaiidisco/commit/f7c779acdac27acfee1340fd0f649aa601c70f75))
+
 ## [0.3.2](https://github.com/ongyjho/hawaiidisco/compare/v0.3.1...v0.3.2) (2026-02-17)
 
 
