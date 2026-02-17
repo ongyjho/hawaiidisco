@@ -4,7 +4,7 @@
 
 ![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue)
 ![License: MIT](https://img.shields.io/badge/license-MIT-green)
-[![CI](https://github.com/ongyjho/hawaii-disco/actions/workflows/ci.yml/badge.svg)](https://github.com/ongyjho/hawaii-disco/actions/workflows/ci.yml)
+[![CI](https://github.com/ongyjho/hawaiidisco/actions/workflows/ci.yml/badge.svg)](https://github.com/ongyjho/hawaiidisco/actions/workflows/ci.yml)
 [![PyPI](https://img.shields.io/pypi/v/hawaiidisco)](https://pypi.org/project/hawaiidisco/)
 
 ![Hawaii Disco Demo](docs/demo.gif)
@@ -20,6 +20,8 @@ Most RSS readers stop at delivering headlines. Hawaii Disco goes further:
 - **Read an article** and instantly get an AI-generated insight on why it matters
 - **Hit `t`** and the full article is translated into your language
 - **Bookmark a few articles** and AI finds the common threads across your interests
+- **Sync to Obsidian** — bookmarked articles auto-save as Obsidian notes with frontmatter and tags
+- **Import/export OPML** — migrate feeds from any RSS reader
 - **All in your terminal** — no browser tabs, no distractions, just you and the content
 
 It works great as a plain RSS reader too. AI features are optional and activate only when you ask.
@@ -33,8 +35,10 @@ It works great as a plain RSS reader too. AI features are optional and activate 
 - **Translation** — Translate titles, descriptions, and full article bodies
 - **Bookmark & Memo** — Save articles with personal notes, exported as Markdown
 - **Bookmark Analysis** — AI finds patterns and themes across your saved articles
+- **Obsidian Integration** — Auto-save bookmarks as Obsidian notes with YAML frontmatter and tags
+- **OPML Import/Export** — Migrate feeds to and from other RSS readers
 - **Multiple AI Providers** — Claude CLI, Anthropic API, OpenAI API (or none at all)
-- **Bilingual UI** — English and Korean
+- **6 Languages** — English, Korean, Japanese, Chinese (Simplified), Spanish, German
 
 ---
 
@@ -70,8 +74,8 @@ pip install hawaiidisco[all]
 ### From Source
 
 ```bash
-git clone https://github.com/ongyjho/hawaii-disco.git
-cd hawaii-disco
+git clone https://github.com/ongyjho/hawaiidisco.git
+cd hawaiidisco
 python -m venv .venv
 source .venv/bin/activate
 pip install -e ".[all]"
@@ -94,7 +98,7 @@ On first launch, a default config is created at `~/.config/hawaiidisco/config.ym
 Edit `~/.config/hawaiidisco/config.yml`:
 
 ```yaml
-# Language: en (English) | ko (Korean)
+# Language: en | ko | ja | zh_CN | es | de
 language: en
 
 # AI provider configuration
@@ -120,6 +124,16 @@ insight:
 
 # Bookmark export path
 bookmark_dir: ~/.local/share/hawaiidisco/bookmarks
+
+# Obsidian vault integration
+obsidian:
+  enabled: false
+  vault_path: ~/Documents/MyVault
+  folder: hawaii-disco     # Subfolder inside the vault
+  template: default        # default | minimal
+  auto_save: true          # Auto-save on bookmark
+  include_insight: true
+  include_translation: true
 ```
 
 ### AI Providers
@@ -147,6 +161,15 @@ ai:
   api_key: ${ANTHROPIC_API_KEY}
 ```
 
+### OPML Import/Export
+
+Migrate your feeds from any RSS reader:
+
+```
+Shift+I   Import feeds from an OPML file
+Shift+E   Export current feeds to OPML
+```
+
 ---
 
 ## Keyboard Shortcuts
@@ -168,6 +191,9 @@ ai:
 | `a` | Add feed |
 | `l` | Bookmark list |
 | `L` | Feed list |
+| `S` | Save to Obsidian |
+| `I` | Import OPML |
+| `E` | Export OPML |
 | `q` | Quit |
 
 ### Article Viewer
@@ -199,14 +225,19 @@ hawaiidisco/
 │   ├── timeline.py     # Article timeline
 │   ├── detail.py       # Article detail view
 │   └── status.py       # Status bar
+├── i18n/               # YAML-based locale system
+│   ├── locales/        # en, ko, ja, zh_CN, es, de
+│   └── validate.py     # Locale file validator
 ├── config.py           # YAML config loader
 ├── db.py               # SQLite database (thread-safe)
 ├── fetcher.py          # RSS feed parser
-├── i18n.py             # Internationalization (en/ko)
+├── md_render.py        # Markdown rendering utilities
 ├── insight.py          # AI insight generation
 ├── reader.py           # HTML to text extraction
 ├── translate.py        # AI translation
-└── bookmark.py         # Bookmark Markdown export
+├── bookmark.py         # Bookmark Markdown export
+├── obsidian.py         # Obsidian vault integration
+└── opml.py             # OPML import/export
 ```
 
 ### Adding a Custom AI Provider
@@ -235,8 +266,8 @@ class MyProvider:
 ### Setup
 
 ```bash
-git clone https://github.com/ongyjho/hawaii-disco.git
-cd hawaii-disco
+git clone https://github.com/ongyjho/hawaiidisco.git
+cd hawaiidisco
 python -m venv .venv
 source .venv/bin/activate
 pip install -e ".[dev,all]"
@@ -257,7 +288,7 @@ ruff check hawaiidisco/ tests/
 ### CI
 
 Tests run automatically on Python 3.11 / 3.12 / 3.13 via GitHub Actions.
-Releases are published to PyPI automatically when a release tag is created.
+Releases are managed by [release-please](https://github.com/googleapis/release-please) and published to PyPI automatically.
 
 ---
 
@@ -271,6 +302,10 @@ Contributions are welcome! Please follow these steps:
 4. Push to the branch (`git push origin feature/my-feature`)
 5. Open a Pull Request
 
+### Adding a New Language
+
+See [`hawaiidisco/i18n/CONTRIBUTING.md`](hawaiidisco/i18n/CONTRIBUTING.md) for the locale contribution guide.
+
 ### Guidelines
 
 - **Branch naming**: Use `feature/`, `bugfix/`, `hotfix/` prefixes
@@ -281,18 +316,19 @@ Contributions are welcome! Please follow these steps:
 
 ### Issues & PRs
 
-- Report bugs or request features via [Issues](https://github.com/ongyjho/hawaii-disco/issues)
+- Report bugs or request features via [Issues](https://github.com/ongyjho/hawaiidisco/issues)
 - Check for existing issues before opening a PR
 
 ---
 
 ## Roadmap
 
-- [ ] OPML import/export
+- [x] OPML import/export
 - [x] Demo screenshot / GIF
+- [x] Obsidian vault integration
+- [x] 6 languages (EN/KO/JA/ZH-CN/ES/DE)
 - [ ] Plugin system
 - [ ] Additional AI providers (Gemini, Ollama, etc.)
-- [ ] More languages (Japanese, etc.)
 - [ ] Theme customization
 
 ---
