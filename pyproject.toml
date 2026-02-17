@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "hawaiidisco"
-version = "0.2.4"
+version = "0.3.0"
 description = "Your AI-powered reading companion in the terminal"
 readme = "README.md"
 license = "MIT"
