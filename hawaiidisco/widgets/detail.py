@@ -5,11 +5,7 @@ from textual.widgets import Static
 
 from hawaiidisco.db import Article
 from hawaiidisco.i18n import t
-
-
-def _escape(text: str) -> str:
-    """Escape Rich markup characters."""
-    return text.replace("[", "\\[")
+from hawaiidisco.utils import _escape
 
 
 class DetailView(Static):

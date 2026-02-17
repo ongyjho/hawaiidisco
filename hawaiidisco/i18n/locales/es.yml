@@ -167,6 +167,17 @@ obsidian_deleted: "Nota de Obsidian eliminada: {title}"
 obsidian_auto_saved: "\u2605 Marcado + Obsidian: {title}"
 save_to_obsidian: "Guardar en Obsidian"
 
+# --- Digest ---
+digest_title: "Resumen de artículos"
+digest_not_enabled: "Función de resumen no habilitada (revisa config.yml)"
+generating_digest: "Generando resumen..."
+digest_complete: "Resumen generado"
+digest_generation_failed: "Error al generar resumen"
+digest_article_count: "{count} artículos incluidos"
+digest_saved_obsidian: "Resumen guardado en Obsidian"
+no_recent_articles_for_digest: "No hay artículos recientes para el resumen"
+digest_label: "Resumen"
+
 # --- Setup Obsidian wizard ---
 setup_obsidian_title: "=== Asistente de configuración de Obsidian ==="
 setup_obsidian_vault_path: "Ruta de la bóveda de Obsidian"

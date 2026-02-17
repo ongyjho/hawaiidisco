@@ -1,7 +1,7 @@
 """Tests for ArticleScreen initialization and pre-mount call safety."""
 from __future__ import annotations
 
-from hawaiidisco.app import ArticleScreen
+from hawaiidisco.screens import ArticleScreen
 
 
 class TestArticleScreenInit:

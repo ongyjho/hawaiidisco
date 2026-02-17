@@ -10,10 +10,7 @@ from pathlib import Path
 from textual import work
 from textual.app import App, ComposeResult
 from textual.binding import Binding
-from textual.containers import Vertical, VerticalScroll
-from textual.screen import ModalScreen
 from textual.css.query import NoMatches
-from textual.widgets import Input, ListView, ListItem, Static, TabbedContent, TabPane, TextArea
 
 from hawaiidisco.ai import get_provider
 from hawaiidisco.config import Config, FeedConfig, load_config, ensure_dirs, add_feed, remove_feed
@@ -24,7 +21,8 @@ from hawaiidisco.db import Article, Database
 from hawaiidisco.fetcher import fetch_all_feeds
 from hawaiidisco.insight import get_or_generate_insight
 from hawaiidisco.bookmark import save_bookmark_md, delete_bookmark_md
-from hawaiidisco.obsidian import save_obsidian_note, delete_obsidian_note, validate_vault_path
+from hawaiidisco.obsidian import save_obsidian_note, save_digest_note, delete_obsidian_note, validate_vault_path
+from hawaiidisco.digest import get_or_generate_digest
 from hawaiidisco.translate import translate_article_meta, translate_text
 from hawaiidisco.widgets.timeline import Timeline
 from hawaiidisco.widgets.detail import DetailView
@@ -936,6 +934,7 @@ class HawaiiDiscoApp(App):
         Binding("V", "select_theme", "Theme"),
         Binding("I", "import_opml", "Import OPML"),
         Binding("E", "export_opml", "Export OPML"),
+        Binding("D", "digest", t("digest_label")),
     ]
 
     def __init__(self) -> None:
@@ -1586,6 +1585,55 @@ class HawaiiDiscoApp(App):
         else:
             self.call_from_thread(
                 screen.update_translated_body, t("translation_failed")
+            )
+
+    # --- Digest Actions ---
+
+    def action_digest(self) -> None:
+        """Generate and display a weekly article digest."""
+        if not self.config.digest.enabled:
+            self.query_one(StatusBar).set_message(t("digest_not_enabled"))
+            return
+        screen = DigestScreen()
+        self.push_screen(screen)
+        self._generate_digest(screen)
+
+    @work(thread=True)
+    def _generate_digest(self, screen: DigestScreen) -> None:
+        """Generate digest in background thread."""
+        try:
+            content, article_count = get_or_generate_digest(
+                self.db, self.ai, self.config.digest
+            )
+            self.call_from_thread(screen.update_content, content, article_count)
+            try:
+                status = self.query_one(StatusBar)
+                self.call_from_thread(status.set_message, t("digest_complete"))
+            except NoMatches:
+                pass
+        except ValueError as exc:
+            self.call_from_thread(screen.update_error, str(exc))
+        except Exception:
+            self.call_from_thread(screen.update_error, t("digest_generation_failed"))
+
+    def _save_digest_to_obsidian(self, content: str, article_count: int) -> None:
+        """Save digest to Obsidian vault."""
+        if not self.config.obsidian.enabled:
+            self.query_one(StatusBar).set_message(t("obsidian_not_configured"))
+            return
+        if not validate_vault_path(self.config.obsidian):
+            self.query_one(StatusBar).set_message(
+                t("obsidian_vault_not_found", path=str(self.config.obsidian.vault_path))
+            )
+            return
+        try:
+            save_digest_note(
+                content, article_count, self.config.obsidian, self.config.digest.period_days
+            )
+            self.query_one(StatusBar).set_message(t("digest_saved_obsidian"))
+        except Exception as exc:
+            self.query_one(StatusBar).set_message(
+                t("obsidian_save_failed", error=type(exc).__name__)
             )
 
     # --- Background Auto-Refresh ---

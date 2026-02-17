@@ -167,6 +167,17 @@ obsidian_deleted: "已删除Obsidian笔记: {title}"
 obsidian_auto_saved: "\u2605 书签 + Obsidian: {title}"
 save_to_obsidian: "保存到Obsidian"
 
+# --- Digest ---
+digest_title: "文章摘要"
+digest_not_enabled: "摘要功能未启用 (请检查config.yml)"
+generating_digest: "正在生成摘要..."
+digest_complete: "摘要生成完成"
+digest_generation_failed: "摘要生成失败"
+digest_article_count: "包含 {count} 篇文章"
+digest_saved_obsidian: "摘要已保存到Obsidian"
+no_recent_articles_for_digest: "没有可用于摘要的最近文章"
+digest_label: "摘要"
+
 # --- Setup Obsidian wizard ---
 setup_obsidian_title: "=== Obsidian设置向导 ==="
 setup_obsidian_vault_path: "Obsidian仓库路径"

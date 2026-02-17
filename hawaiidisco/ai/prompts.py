@@ -105,5 +105,23 @@ BOOKMARK_ANALYSIS_ITEM: str = (
     "- Title: {title}\n  Description: {description}\n  Insight: {insight}"
 )
 
+# 다이제스트 프롬프트
+DIGEST_PROMPT: str = (
+    "You are a senior tech editor creating a weekly digest of notable articles.\n"
+    "Below are the articles from the past {period_days} days.\n\n"
+    "<articles>\n{articles}\n</articles>\n\n"
+    "Please create a concise, well-structured digest in {output_language}:\n"
+    "1. **Key Themes**: Identify 2-4 major themes or trends across these articles\n"
+    "2. **Top Highlights**: Summarize the 3-5 most important articles with why they matter\n"
+    "3. **What to Watch**: Briefly note emerging topics or implications for engineers\n\n"
+    "Keep the digest focused and actionable. Use markdown formatting."
+)
+
+# 다이제스트 아티클 항목 템플릿
+DIGEST_ARTICLE_ITEM: str = (
+    "- Title: {title}\n  Feed: {feed_name}\n  Date: {date}\n"
+    "  Description: {description}\n  Insight: {insight}"
+)
+
 # No-description placeholder
 NONE_TEXT: str = "(none)"

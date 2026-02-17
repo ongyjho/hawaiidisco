@@ -167,6 +167,17 @@ obsidian_deleted: "Obsidianノートを削除しました: {title}"
 obsidian_auto_saved: "\u2605 ブックマーク + Obsidian: {title}"
 save_to_obsidian: "Obsidianに保存"
 
+# --- Digest ---
+digest_title: "記事ダイジェスト"
+digest_not_enabled: "ダイジェスト機能が無効です (config.ymlを確認してください)"
+generating_digest: "ダイジェスト生成中..."
+digest_complete: "ダイジェスト生成完了"
+digest_generation_failed: "ダイジェスト生成に失敗しました"
+digest_article_count: "{count}件の記事を含む"
+digest_saved_obsidian: "ダイジェストをObsidianに保存しました"
+no_recent_articles_for_digest: "ダイジェスト対象の最近の記事がありません"
+digest_label: "ダイジェスト"
+
 # --- Setup Obsidian wizard ---
 setup_obsidian_title: "=== Obsidianセットアップウィザード ==="
 setup_obsidian_vault_path: "Obsidianボルトのパス"

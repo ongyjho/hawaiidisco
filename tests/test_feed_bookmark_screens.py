@@ -5,7 +5,7 @@ from datetime import datetime
 
 from hawaiidisco.config import FeedConfig
 from hawaiidisco.db import Article
-from hawaiidisco.app import FeedItem, FeedListScreen, BookmarkItem, BookmarkListScreen, TagItem
+from hawaiidisco.screens import FeedItem, FeedListScreen, BookmarkItem, BookmarkListScreen, TagItem
 
 
 def _make_article(

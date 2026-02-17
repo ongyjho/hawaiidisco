@@ -10,6 +10,7 @@ from textual.widgets import ListView, ListItem, Static
 
 from hawaiidisco.db import Article
 from hawaiidisco.i18n import t
+from hawaiidisco.utils import _escape
 
 
 class ArticleItem(ListItem):
@@ -141,11 +142,6 @@ class Timeline(ListView):
         if self.highlighted_child and isinstance(self.highlighted_child, ArticleItem):
             return self.highlighted_child.article
         return None
-
-
-def _escape(text: str) -> str:
-    """Escape Rich markup characters."""
-    return text.replace("[", "\\[")
 
 
 def _relative_time(dt: datetime) -> str:
