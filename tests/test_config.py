@@ -6,7 +6,7 @@ from pathlib import Path
 import pytest
 import yaml
 
-from hawaiidisco.config import load_config, _resolve_env, remove_feed
+from hawaiidisco.config import load_config, _resolve_env, _prompt_yn, remove_feed, setup_obsidian
 from hawaiidisco.i18n import get_lang, Lang
 
 
@@ -247,3 +247,120 @@ class TestRemoveFeed:
 
         result = remove_feed("https://nonexistent.com/feed")
         assert result is False
+
+
+class TestPromptYn:
+    """Tests for the _prompt_yn helper."""
+
+    def test_default_true_empty_input(self, monkeypatch) -> None:
+        monkeypatch.setattr("builtins.input", lambda prompt="": "")
+        assert _prompt_yn("test", default=True) is True
+
+    def test_default_false_empty_input(self, monkeypatch) -> None:
+        monkeypatch.setattr("builtins.input", lambda prompt="": "")
+        assert _prompt_yn("test", default=False) is False
+
+    def test_yes_input(self, monkeypatch) -> None:
+        monkeypatch.setattr("builtins.input", lambda prompt="": "y")
+        assert _prompt_yn("test", default=False) is True
+
+    def test_no_input(self, monkeypatch) -> None:
+        monkeypatch.setattr("builtins.input", lambda prompt="": "n")
+        assert _prompt_yn("test", default=True) is False
+
+
+class TestSetupObsidian:
+    """Tests for the interactive Obsidian setup wizard."""
+
+    def test_creates_config(self, tmp_path: Path, monkeypatch) -> None:
+        """setup_obsidian writes obsidian section to config.yml."""
+        config_path = tmp_path / "config.yml"
+        config_path.write_text("language: en\nfeeds: []\n", encoding="utf-8")
+        monkeypatch.setattr("hawaiidisco.config.CONFIG_PATH", config_path)
+
+        vault = tmp_path / "my-vault"
+        vault.mkdir()
+
+        # vault_path, folder(default), auto_save(Y), insight(Y), translation(Y), tags(default)
+        inputs = iter([str(vault), "", "", "", "", ""])
+        monkeypatch.setattr("builtins.input", lambda prompt="": next(inputs))
+
+        setup_obsidian()
+
+        with open(config_path, encoding="utf-8") as f:
+            data = yaml.safe_load(f)
+
+        assert data["obsidian"]["enabled"] is True
+        assert data["obsidian"]["vault_path"] == str(vault)
+        assert data["obsidian"]["folder"] == "hawaii-disco"
+        assert data["obsidian"]["auto_save"] is True
+
+    def test_invalid_path_retries(self, tmp_path: Path, monkeypatch) -> None:
+        """setup_obsidian retries when vault path does not exist."""
+        config_path = tmp_path / "config.yml"
+        config_path.write_text("feeds: []\n", encoding="utf-8")
+        monkeypatch.setattr("hawaiidisco.config.CONFIG_PATH", config_path)
+
+        vault = tmp_path / "real-vault"
+        vault.mkdir()
+
+        # First input is invalid, second is valid
+        inputs = iter(["/nonexistent/path", str(vault), "", "", "", "", ""])
+        monkeypatch.setattr("builtins.input", lambda prompt="": next(inputs))
+
+        setup_obsidian()
+
+        with open(config_path, encoding="utf-8") as f:
+            data = yaml.safe_load(f)
+        assert data["obsidian"]["enabled"] is True
+        assert data["obsidian"]["vault_path"] == str(vault)
+
+    def test_preserves_existing_config(self, tmp_path: Path, monkeypatch) -> None:
+        """setup_obsidian preserves other config sections."""
+        config_path = tmp_path / "config.yml"
+        config_path.write_text(
+            "language: ko\nfeeds:\n- url: https://example.com\n  name: Test\n",
+            encoding="utf-8",
+        )
+        monkeypatch.setattr("hawaiidisco.config.CONFIG_PATH", config_path)
+
+        vault = tmp_path / "vault"
+        vault.mkdir()
+
+        inputs = iter([str(vault), "", "", "", "", ""])
+        monkeypatch.setattr("builtins.input", lambda prompt="": next(inputs))
+
+        setup_obsidian()
+
+        with open(config_path, encoding="utf-8") as f:
+            data = yaml.safe_load(f)
+        assert data["language"] == "ko"
+        assert len(data["feeds"]) == 1
+        assert data["obsidian"]["enabled"] is True
+
+        # restore
+        from hawaiidisco.i18n import set_lang
+        set_lang("en")
+
+    def test_custom_values(self, tmp_path: Path, monkeypatch) -> None:
+        """setup_obsidian saves custom user inputs."""
+        config_path = tmp_path / "config.yml"
+        config_path.write_text("feeds: []\n", encoding="utf-8")
+        monkeypatch.setattr("hawaiidisco.config.CONFIG_PATH", config_path)
+
+        vault = tmp_path / "vault"
+        vault.mkdir()
+
+        # vault, folder=notes, auto_save=n, insight=n, translation=y, tags=hd
+        inputs = iter([str(vault), "notes", "n", "n", "y", "hd"])
+        monkeypatch.setattr("builtins.input", lambda prompt="": next(inputs))
+
+        setup_obsidian()
+
+        with open(config_path, encoding="utf-8") as f:
+            data = yaml.safe_load(f)
+        assert data["obsidian"]["folder"] == "notes"
+        assert data["obsidian"]["auto_save"] is False
+        assert data["obsidian"]["include_insight"] is False
+        assert data["obsidian"]["include_translation"] is True
+        assert data["obsidian"]["tags_prefix"] == "hd"

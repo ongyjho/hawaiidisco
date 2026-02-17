@@ -1580,6 +1580,25 @@ class HawaiiDiscoApp(App):
 
 
 def main() -> None:
+    import argparse
+
+    parser = argparse.ArgumentParser(
+        prog="hawaiidisco",
+        description="AI-powered RSS reader in the terminal",
+    )
+    parser.add_argument(
+        "--setup-obsidian",
+        action="store_true",
+        help="Interactive Obsidian vault configuration wizard",
+    )
+    args = parser.parse_args()
+
+    if args.setup_obsidian:
+        from hawaiidisco.config import setup_obsidian
+
+        setup_obsidian()
+        return
+
     app = HawaiiDiscoApp()
     app.run()
 
