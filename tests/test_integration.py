@@ -397,3 +397,56 @@ class TestDigestThreadSafety:
             t.join()
 
         assert len(errors) == 0, f"Errors in threads: {errors}"
+
+
+class TestDigestObsidianSaveMethod:
+    """Test _save_digest_to_obsidian uses notify (not StatusBar query)."""
+
+    def test_save_success_notifies(self, obsidian_config: ObsidianConfig) -> None:
+        """Successful Obsidian save calls notify, not query_one(StatusBar)."""
+        from hawaiidisco.app import HawaiiDiscoApp
+
+        fake_self = MagicMock(spec=HawaiiDiscoApp)
+        fake_self.config = MagicMock()
+        fake_self.config.obsidian = obsidian_config
+        fake_self.config.digest.period_days = 7
+
+        content = "## Themes\n- AI"
+        HawaiiDiscoApp._save_digest_to_obsidian(fake_self, content, 3)
+
+        fake_self.notify.assert_called_once()
+        assert "obsidian" in fake_self.notify.call_args[0][0].lower() or "저장" in fake_self.notify.call_args[0][0]
+        # Must NOT touch query_one
+        fake_self.query_one.assert_not_called()
+
+    def test_disabled_obsidian_notifies(self) -> None:
+        """Disabled Obsidian config calls notify with warning."""
+        from hawaiidisco.app import HawaiiDiscoApp
+
+        fake_self = MagicMock(spec=HawaiiDiscoApp)
+        fake_self.config = MagicMock()
+        fake_self.config.obsidian = ObsidianConfig(enabled=False)
+
+        HawaiiDiscoApp._save_digest_to_obsidian(fake_self, "content", 1)
+
+        fake_self.notify.assert_called_once()
+        assert fake_self.notify.call_args[1].get("severity") == "warning"
+        fake_self.query_one.assert_not_called()
+
+    def test_invalid_vault_notifies(self, tmp_path: Path) -> None:
+        """Invalid vault path calls notify with error."""
+        from hawaiidisco.app import HawaiiDiscoApp
+
+        fake_self = MagicMock(spec=HawaiiDiscoApp)
+        fake_self.config = MagicMock()
+        fake_self.config.obsidian = ObsidianConfig(
+            enabled=True,
+            vault_path=tmp_path / "nonexistent",
+            folder="notes",
+        )
+
+        HawaiiDiscoApp._save_digest_to_obsidian(fake_self, "content", 1)
+
+        fake_self.notify.assert_called_once()
+        assert fake_self.notify.call_args[1].get("severity") == "error"
+        fake_self.query_one.assert_not_called()
