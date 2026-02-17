@@ -63,3 +63,40 @@ jobs:
         run: |
           gh pr comment "${{ steps.pr.outputs.number }}" \
             --body-file /tmp/review_body.txt
+
+      - name: Create issues from suggestions
+        if: steps.check.outputs.skip != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          PR_NUMBER="${{ steps.pr.outputs.number }}"
+          COUNT=$(python3 -c "import json; print(len(json.load(open('/tmp/suggestions.json'))))")
+
+          if [ "$COUNT" = "0" ]; then
+            echo "No suggestions to create issues for."
+            exit 0
+          fi
+
+          ISSUE_LINKS=""
+          for i in $(seq 0 $((COUNT - 1))); do
+            TITLE=$(python3 -c "import json; print(json.load(open('/tmp/suggestions.json'))[$i]['title'])")
+            LABEL=$(python3 -c "import json; print(json.load(open('/tmp/suggestions.json'))[$i]['label'])")
+            BODY=$(python3 -c "import json; s=json.load(open('/tmp/suggestions.json'))[$i]; print(s['body'] + '\n\n---\n_From PR #$PR_NUMBER AI review_')")
+
+            # Create label if it doesn't exist (ignore errors)
+            gh label create "$LABEL" --color EDEDED 2>/dev/null || true
+
+            ISSUE_URL=$(gh issue create \
+              --title "$TITLE" \
+              --body "$BODY" \
+              --label "$LABEL","ai-review")
+
+            ISSUE_LINKS="$ISSUE_LINKS\n- $ISSUE_URL"
+            echo "Created issue: $ISSUE_URL"
+          done
+
+          # Comment on PR with links to created issues
+          if [ -n "$ISSUE_LINKS" ]; then
+            printf "## 📋 Issues Created from Review\n$ISSUE_LINKS" | \
+              gh pr comment "$PR_NUMBER" --body-file -
+          fi

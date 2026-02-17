@@ -29,29 +29,31 @@ SYSTEM_PROMPT = """\
 - CHANGELOG 항목 필요 여부
 
 간결하게 핵심만 지적해주세요. 사소한 스타일 이슈보다 실질적 문제에 집중해주세요.
-문제가 없으면 "LGTM"이라고만 답해주세요.
+
+반드시 아래 JSON 형식으로만 응답해주세요. 다른 텍스트 없이 JSON만 출력하세요:
+{
+  "review": "마크다운 형식의 리뷰 본문",
+  "suggestions": [
+    {
+      "title": "이슈 제목 (영어, 간결하게)",
+      "label": "bug | enhancement | performance | security | documentation",
+      "body": "이슈 본문 (마크다운, 문제 설명과 제안 포함)"
+    }
+  ]
+}
+
+규칙:
+- suggestions는 실질적이고 중요한 제안만 포함 (사소한 스타일 이슈 제외)
+- 문제가 없으면 suggestions를 빈 배열로
+- 문제가 없으면 review는 "LGTM"
+- suggestions의 title은 영어, body는 한국어
 """
 
+VALID_LABELS = {"bug", "enhancement", "performance", "security", "documentation"}
 
-def main() -> None:
-    api_key = os.environ.get("OPENAI_API_KEY")
-    if not api_key:
-        print("Error: OPENAI_API_KEY is not set", file=sys.stderr)
-        sys.exit(1)
 
-    diff_path = "/tmp/pr_diff_truncated.txt"
-    if not os.path.exists(diff_path):
-        print(f"Error: {diff_path} not found", file=sys.stderr)
-        sys.exit(1)
-
-    with open(diff_path) as f:
-        diff = f.read()
-
-    if not diff.strip():
-        with open("/tmp/review_body.txt", "w") as f:
-            f.write("## 🤖 AI Code Review\n\nNo changes detected.\n")
-        return
-
+def call_openai(api_key: str, diff: str) -> dict:
+    """Call OpenAI API and return parsed JSON response."""
     body = json.dumps({
         "model": "gpt-4o",
         "messages": [
@@ -60,6 +62,7 @@ def main() -> None:
         ],
         "max_tokens": 4096,
         "temperature": 0.2,
+        "response_format": {"type": "json_object"},
     }).encode()
 
     req = urllib.request.Request(
@@ -79,12 +82,68 @@ def main() -> None:
         print(f"OpenAI API error {e.code}: {error_body}", file=sys.stderr)
         sys.exit(1)
 
-    review = result["choices"][0]["message"]["content"]
+    content = result["choices"][0]["message"]["content"]
+    return json.loads(content)
 
-    with open("/tmp/review_body.txt", "w") as f:
-        f.write("## 🤖 AI Code Review\n\n")
-        f.write(review)
+
+def write_review(review_data: dict, output_path: str) -> None:
+    """Write the review comment body to a file."""
+    review_text = review_data.get("review", "LGTM")
+    suggestions = review_data.get("suggestions", [])
+
+    with open(output_path, "w") as f:
+        f.write("## \U0001f916 AI Code Review\n\n")
+        f.write(review_text)
+        if suggestions:
+            f.write(f"\n\n---\n\U0001f4cb **{len(suggestions)}건의 제안사항이 GitHub 이슈로 등록됩니다.**")
         f.write("\n\n---\n*Reviewed by GPT-4o*")
+
+
+def write_suggestions(review_data: dict, output_path: str) -> None:
+    """Write validated suggestions to a JSON file for the workflow to consume."""
+    suggestions = review_data.get("suggestions", [])
+
+    validated = []
+    for s in suggestions:
+        title = s.get("title", "").strip()
+        label = s.get("label", "enhancement").strip()
+        body = s.get("body", "").strip()
+        if not title or not body:
+            continue
+        if label not in VALID_LABELS:
+            label = "enhancement"
+        validated.append({"title": title, "label": label, "body": body})
+
+    with open(output_path, "w") as f:
+        json.dump(validated, f, ensure_ascii=False)
+
+    print(f"{len(validated)} suggestion(s) to create as issues.")
+
+
+def main() -> None:
+    api_key = os.environ.get("OPENAI_API_KEY")
+    if not api_key:
+        print("Error: OPENAI_API_KEY is not set", file=sys.stderr)
+        sys.exit(1)
+
+    diff_path = "/tmp/pr_diff_truncated.txt"
+    if not os.path.exists(diff_path):
+        print(f"Error: {diff_path} not found", file=sys.stderr)
+        sys.exit(1)
+
+    with open(diff_path) as f:
+        diff = f.read()
+
+    if not diff.strip():
+        with open("/tmp/review_body.txt", "w") as f:
+            f.write("## \U0001f916 AI Code Review\n\nNo changes detected.\n")
+        with open("/tmp/suggestions.json", "w") as f:
+            json.dump([], f)
+        return
+
+    review_data = call_openai(api_key, diff)
+    write_review(review_data, "/tmp/review_body.txt")
+    write_suggestions(review_data, "/tmp/suggestions.json")
 
     print("Review generated successfully.")
 
