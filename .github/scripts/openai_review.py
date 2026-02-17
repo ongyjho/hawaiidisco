@@ -7,46 +7,46 @@ import sys
 import urllib.request
 
 SYSTEM_PROMPT = """\
-당신은 시니어 소프트웨어 엔지니어이고, 아래 PR diff를 리뷰해야 합니다.
-프로젝트는 Python Textual TUI 앱(hawaii-disco)입니다.
+You are a senior software engineer reviewing the PR diff below.
+The project is a Python Textual TUI app (hawaii-disco).
 
-아래 기준으로 리뷰해주세요:
+Review based on the following criteria:
 
-## 코드 품질
-- 버그, 보안 취약점, 성능 이슈
-- 코드 스타일 (ruff py311, line-length=120)
-- 타입 힌트 일관성 (from __future__ import annotations)
-- 기존 패턴/컨벤션과의 일관성
+## Code Quality
+- Bugs, security vulnerabilities, performance issues
+- Code style (ruff py311, line-length=120)
+- Type hint consistency (from __future__ import annotations)
+- Consistency with existing patterns/conventions
 
-## 테스트
-- 변경된 코드에 대한 테스트 커버리지
-- 엣지 케이스 누락 여부
-- 테스트 네이밍 컨벤션
+## Tests
+- Test coverage for changed code
+- Missing edge cases
+- Test naming conventions
 
-## 문서
-- CLAUDE.md 업데이트 필요 여부
-- docstring/주석 적절성
-- CHANGELOG 항목 필요 여부
+## Documentation
+- Whether CLAUDE.md needs updating
+- Appropriateness of docstrings/comments
+- Whether a CHANGELOG entry is needed
 
-간결하게 핵심만 지적해주세요. 사소한 스타일 이슈보다 실질적 문제에 집중해주세요.
+Be concise and focus on substantive issues. Skip trivial style nits.
 
-반드시 아래 JSON 형식으로만 응답해주세요. 다른 텍스트 없이 JSON만 출력하세요:
+Respond ONLY in the following JSON format, with no other text:
 {
-  "review": "마크다운 형식의 리뷰 본문",
+  "review": "Review body in markdown",
   "suggestions": [
     {
-      "title": "이슈 제목 (영어, 간결하게)",
+      "title": "Concise issue title",
       "label": "bug | enhancement | performance | security | documentation",
-      "body": "이슈 본문 (마크다운, 문제 설명과 제안 포함)"
+      "body": "Issue body in markdown, describing the problem and suggested fix"
     }
   ]
 }
 
-규칙:
-- suggestions는 실질적이고 중요한 제안만 포함 (사소한 스타일 이슈 제외)
-- 문제가 없으면 suggestions를 빈 배열로
-- 문제가 없으면 review는 "LGTM"
-- suggestions의 title은 영어, body는 한국어
+Rules:
+- suggestions should only include substantive, important items (skip trivial style issues)
+- If there are no issues, set suggestions to an empty array
+- If there are no issues, set review to "LGTM"
+- All output must be in English
 """
 
 VALID_LABELS = {"bug", "enhancement", "performance", "security", "documentation"}
@@ -95,7 +95,7 @@ def write_review(review_data: dict, output_path: str) -> None:
         f.write("## \U0001f916 AI Code Review\n\n")
         f.write(review_text)
         if suggestions:
-            f.write(f"\n\n---\n\U0001f4cb **{len(suggestions)}건의 제안사항이 GitHub 이슈로 등록됩니다.**")
+            f.write(f"\n\n---\n\U0001f4cb **{len(suggestions)} suggestion(s) will be filed as GitHub issues.**")
         f.write("\n\n---\n*Reviewed by GPT-4o*")
 
 
