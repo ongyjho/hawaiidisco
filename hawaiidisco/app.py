@@ -180,7 +180,7 @@ class ArticleScreen(ModalScreen):
                 pass
 
     def _get_active_scroll(self) -> VerticalScroll | None:
-        """현재 활성 탭의 VerticalScroll 위젯을 반환한다."""
+        """Return the VerticalScroll widget of the currently active tab."""
         try:
             tabs = self.query_one("#article-tabs", TabbedContent)
             pane = tabs.get_pane(tabs.active)
@@ -330,7 +330,7 @@ class AddFeedScreen(ModalScreen[tuple]):
         elif event.input.id == "feed-name":
             url = self.query_one("#feed-url", Input).value.strip()
             name = self.query_one("#feed-name", Input).value.strip()
-            # http(s) 스키마만 허용
+            # Allow http(s) scheme only
             if url and url.startswith(("http://", "https://")):
                 self.dismiss((url, name or url))
             elif url:
@@ -345,7 +345,7 @@ class AddFeedScreen(ModalScreen[tuple]):
 
 
 class ConfirmDeleteScreen(ModalScreen[bool]):
-    """삭제 확인 모달."""
+    """Delete confirmation modal."""
 
     DEFAULT_CSS = """
     ConfirmDeleteScreen {
@@ -482,7 +482,7 @@ class FeedListScreen(ModalScreen[str | None]):
             pass
 
     def key_d(self) -> None:
-        """선택된 피드 삭제 확인 모달을 띄운다."""
+        """Show a delete confirmation modal for the selected feed."""
         try:
             lv = self.query_one("#feed-listview", ListView)
         except NoMatches:
@@ -499,7 +499,7 @@ class FeedListScreen(ModalScreen[str | None]):
         )
 
     def _do_delete(self, confirmed: bool, feed: FeedConfig) -> None:
-        """삭제 확인 후 실제 삭제를 수행한다."""
+        """Perform the actual deletion after confirmation."""
         if not confirmed:
             return
         self.app._do_delete_feed(feed)  # type: ignore[attr-defined]
@@ -616,7 +616,7 @@ class BookmarkListScreen(ModalScreen[str | None]):
             lv.append(BookmarkItem(article, memo, article_tags))
 
     def update_analysis(self, text: str) -> None:
-        """AI 분석 결과를 갱신한다."""
+        """Update AI analysis results."""
         try:
             self.query_one("#bookmark-analysis", Static).update(_escape(text))
         except NoMatches:
@@ -673,7 +673,7 @@ class OpmlImportScreen(ModalScreen[str]):
 
 
 class TagEditScreen(ModalScreen[str]):
-    """태그 편집 모달."""
+    """Tag editing modal."""
 
     DEFAULT_CSS = """
     TagEditScreen {
@@ -709,7 +709,7 @@ class TagEditScreen(ModalScreen[str]):
 
 
 class TagItem(ListItem):
-    """태그 목록의 개별 항목."""
+    """Individual item in the tag list."""
 
     def __init__(self, tag: str, count: int) -> None:
         super().__init__()
@@ -727,7 +727,7 @@ class TagItem(ListItem):
 
 
 class TagListScreen(ModalScreen[str | None]):
-    """태그 필터 목록 모달."""
+    """Tag filter list modal."""
 
     BINDINGS = [
         Binding("escape", "dismiss_screen", "Close"),
@@ -794,7 +794,7 @@ class TagListScreen(ModalScreen[str | None]):
 
 
 class ThemeItem(ListItem):
-    """테마 목록의 개별 항목."""
+    """Individual item in the theme list."""
 
     def __init__(self, theme_name: str, is_dark: bool, is_current: bool) -> None:
         super().__init__()
@@ -812,7 +812,7 @@ class ThemeItem(ListItem):
 
 
 class ThemeListScreen(ModalScreen[str | None]):
-    """테마 선택 모달."""
+    """Theme selection modal."""
 
     BINDINGS = [
         Binding("escape", "dismiss_screen", "Close"),
@@ -1022,7 +1022,7 @@ class HawaiiDiscoApp(App):
                 feed_name=self._feed_filter,
                 unread_only=self._unread_filter,
             )
-        # 태그 정보를 일괄 조회하여 Timeline에 전달
+        # Batch-fetch tag info and pass to Timeline
         all_tags = self.db.get_all_bookmark_tags()
         try:
             timeline = self.query_one(Timeline)
@@ -1094,7 +1094,9 @@ class HawaiiDiscoApp(App):
             article = None
 
         if article:
-            insight = get_or_generate_insight(article, self.db, self.ai)
+            insight = get_or_generate_insight(
+                article, self.db, self.ai, persona=self.config.insight.persona
+            )
             self.call_from_thread(screen.update_insight, insight)
             self.call_from_thread(self._reload_articles)
 
@@ -1209,7 +1211,7 @@ class HawaiiDiscoApp(App):
         if query:
             self._search_query = query
             self._reload_articles()
-            # 검색 결과가 없으면 안내 메시지 표시
+            # Show a notice when search returns no results
             timeline = self.query_one(Timeline)
             if len(timeline) == 0:
                 self.query_one(StatusBar).set_message(
@@ -1223,7 +1225,7 @@ class HawaiiDiscoApp(App):
             self._reload_articles()
 
     def action_clear_search(self) -> None:
-        """검색, 태그 필터, 피드 필터, 안읽은글 필터, 북마크 필터를 해제하고 원래 리스트로 복원."""
+        """Clear search, tag filter, feed filter, and bookmark filter; restore the original list."""
         if self._search_query is not None:
             self._search_query = None
             self.query_one(StatusBar).set_message(t("search_cleared"))
@@ -1289,25 +1291,25 @@ class HawaiiDiscoApp(App):
         )
 
     def _on_feed_list_result(self, feed_name: str | None) -> None:
-        """피드 선택 결과로 필터를 적용한다."""
+        """Apply filter based on feed selection result."""
         if feed_name:
             self._feed_filter = feed_name
             self.query_one(StatusBar).set_message(t("feed_filter_active", name=feed_name))
             self._reload_articles()
-        # None이면 아무 작업 안 함 (ESC/q로 닫은 경우)
+        # None means no action (dismissed with ESC/q)
 
     def _do_delete_feed(self, feed: FeedConfig) -> None:
-        """피드를 config.yml과 DB에서 삭제하고 UI를 갱신한다."""
-        # config.yml에서 제거
+        """Delete a feed from config.yml and DB, then refresh the UI."""
+        # Remove from config.yml
         remove_feed(feed.url)
-        # 인메모리 config에서 제거
+        # Remove from in-memory config
         self.config.feeds = [f for f in self.config.feeds if f.url != feed.url]
-        # DB에서 해당 피드 글 삭제
+        # Delete articles for this feed from DB
         deleted_count = self.db.delete_articles_by_feed(feed.name)
-        # 피드 필터가 삭제된 피드면 해제
+        # Clear feed filter if it was set to the deleted feed
         if self._feed_filter == feed.name:
             self._feed_filter = None
-        # UI 갱신
+        # Refresh UI
         self.query_one(StatusBar).set_message(
             t("feed_deleted", name=feed.name, count=deleted_count)
         )
@@ -1327,13 +1329,14 @@ class HawaiiDiscoApp(App):
     def _generate_bookmark_analysis(
         self, screen: BookmarkListScreen, articles: list[Article]
     ) -> None:
-        """북마크 컬렉션에 대한 AI 분석을 생성한다."""
+        """Generate AI analysis for a bookmark collection."""
         if not self.ai.is_available():
             self.call_from_thread(screen.update_analysis, t("claude_cli_not_found"))
             return
 
         from hawaiidisco.ai.prompts import (
             BOOKMARK_ANALYSIS_PROMPT,
+            BOOKMARK_ANALYSIS_PROMPT_PERSONA,
             BOOKMARK_ANALYSIS_ITEM,
             NONE_TEXT,
             get_lang_name,
@@ -1341,6 +1344,7 @@ class HawaiiDiscoApp(App):
         from hawaiidisco.i18n import get_lang
 
         lang = get_lang().value
+        persona = self.config.insight.persona
 
         bookmarks_text = "\n".join(
             BOOKMARK_ANALYSIS_ITEM.format(
@@ -1351,10 +1355,14 @@ class HawaiiDiscoApp(App):
             for a in articles
         )
 
-        prompt = BOOKMARK_ANALYSIS_PROMPT.format(
-            output_language=get_lang_name(lang),
-            bookmarks=bookmarks_text,
-        )
+        template = BOOKMARK_ANALYSIS_PROMPT_PERSONA if persona else BOOKMARK_ANALYSIS_PROMPT
+        fmt_kwargs: dict[str, str] = {
+            "output_language": get_lang_name(lang),
+            "bookmarks": bookmarks_text,
+        }
+        if persona:
+            fmt_kwargs["persona"] = persona
+        prompt = template.format(**fmt_kwargs)
 
         result = self.ai.generate(prompt, timeout=60)
         try:
@@ -1377,7 +1385,7 @@ class HawaiiDiscoApp(App):
             self._read_article(article)
 
     def action_import_opml(self) -> None:
-        """OPML 파일에서 피드를 가져온다."""
+        """Import feeds from an OPML file."""
         self.push_screen(OpmlImportScreen(), self._on_opml_import_result)
 
     def _on_opml_import_result(self, path_str: str) -> None:
@@ -1410,7 +1418,7 @@ class HawaiiDiscoApp(App):
             self._do_refresh()
 
     def action_export_opml(self) -> None:
-        """현재 피드 목록을 OPML 파일로 내보낸다."""
+        """Export the current feed list to an OPML file."""
         if not self.config.feeds:
             self.query_one(StatusBar).set_message(t("opml_no_feeds"))
             return
@@ -1428,7 +1436,7 @@ class HawaiiDiscoApp(App):
     # --- Tag Actions ---
 
     def action_edit_tags(self) -> None:
-        """북마크된 글에 태그를 편집한다."""
+        """Edit tags on a bookmarked article."""
         article = self._get_current_article()
         if not article:
             return
@@ -1445,7 +1453,7 @@ class HawaiiDiscoApp(App):
         article = self._get_current_article()
         if not article or not result and result != "":
             return
-        # result가 빈 문자열이면 dismiss(ESC) → 무시
+        # Empty string result means dismissed (ESC) -- ignore
         if result == "":
             return
         tags = [t_tag.strip() for t_tag in result.split(",") if t_tag.strip()]
@@ -1454,12 +1462,12 @@ class HawaiiDiscoApp(App):
         self._reload_articles()
 
     def action_tag_list(self) -> None:
-        """태그 목록을 보여주고 선택하면 필터링한다."""
+        """Show the tag list and filter on selection."""
         all_tags = self.db.get_all_tags()
         if not all_tags:
             self.query_one(StatusBar).set_message(t("no_tags"))
             return
-        # 각 태그별 글 수 계산
+        # Count articles per tag
         tags_with_counts = [
             (tag, len(self.db.get_articles_by_tag(tag))) for tag in all_tags
         ]
@@ -1477,13 +1485,13 @@ class HawaiiDiscoApp(App):
     # --- Theme Actions ---
 
     def action_select_theme(self) -> None:
-        """테마 선택 화면을 연다."""
+        """Open the theme selection screen."""
         themes: list[tuple[str, bool]] = []
         for name, theme_obj in self.available_themes.items():
             if name == "textual-ansi":
                 continue
             themes.append((name, theme_obj.dark))
-        # 다크 테마를 먼저, 이름순 정렬
+        # Sort dark themes first, then by name
         themes.sort(key=lambda x: (not x[1], x[0]))
         self.push_screen(
             ThemeListScreen(themes, self.theme),
@@ -1577,7 +1585,7 @@ class HawaiiDiscoApp(App):
 
     def _notify_macos(self, message: str) -> None:
         """Send a macOS notification."""
-        # AppleScript 인젝션 방지: 백슬래시와 큰따옴표 이스케이프
+        # Prevent AppleScript injection: escape backslashes and double quotes
         safe_msg = message.replace("\\", "\\\\").replace('"', '\\"')
         try:
             subprocess.Popen(

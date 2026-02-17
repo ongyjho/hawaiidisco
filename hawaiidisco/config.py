@@ -34,6 +34,7 @@ class AIConfig:
 class InsightConfig:
     enabled: bool = True
     mode: str = "manual"  # auto | manual
+    persona: str = ""
 
 
 @dataclass
@@ -110,6 +111,7 @@ def load_config(path: Path | None = None) -> Config:
     insight = InsightConfig(
         enabled=insight_raw.get("enabled", True),
         mode=insight_raw.get("mode", "manual"),
+        persona=insight_raw.get("persona", ""),
     )
 
     bookmark_dir = Path(
@@ -189,11 +191,11 @@ def remove_feed(feed_url: str) -> bool:
 
 
 def ensure_dirs(config: Config) -> None:
-    """Create required directories if they do not exist. 소유자만 접근 가능하도록 권한 설정."""
+    """Create required directories if they do not exist. Permissions set to owner-only access."""
     dirs: list[Path] = [config.db_path.parent, config.bookmark_dir]
     if config.obsidian.enabled and config.obsidian.vault_path != Path(""):
         dirs.append(config.obsidian.vault_path / config.obsidian.folder)
     for d in dirs:
         d.mkdir(parents=True, exist_ok=True, mode=0o700)
-        # 기존 디렉토리도 권한 보정
+        # Fix permissions on pre-existing directories
         d.chmod(0o700)

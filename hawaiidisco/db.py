@@ -147,7 +147,7 @@ class Database:
             query += " AND feed_name = ?"
             params.append(feed_name)
         if search:
-            # LIKE 와일드카드 문자 이스케이프
+            # Escape LIKE wildcard characters
             escaped = search.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
             pattern = f"%{escaped}%"
             query += (
@@ -239,7 +239,7 @@ class Database:
     def delete_articles_by_feed(self, feed_name: str) -> int:
         """Delete all articles (and their bookmarks) belonging to a feed. Return deleted count."""
         conn = self._get_conn()
-        # 먼저 bookmarks FK 참조 삭제
+        # Delete bookmark FK references first
         conn.execute(
             "DELETE FROM bookmarks WHERE article_id IN "
             "(SELECT id FROM articles WHERE feed_name = ?)",
@@ -254,7 +254,7 @@ class Database:
     # --- Tag Operations ---
 
     def set_bookmark_tags(self, article_id: str, tags: list[str]) -> None:
-        """북마크의 태그를 저장한다. 빈 리스트면 NULL로 설정."""
+        """Save bookmark tags. Sets to NULL if the list is empty."""
         value = ",".join(t.strip() for t in tags if t.strip()) or None
         self._get_conn().execute(
             "UPDATE bookmarks SET tags = ? WHERE article_id = ?",
@@ -263,7 +263,7 @@ class Database:
         self._get_conn().commit()
 
     def get_bookmark_tags(self, article_id: str) -> list[str]:
-        """북마크의 태그 리스트를 반환한다."""
+        """Return the tag list for a bookmark."""
         row = self._get_conn().execute(
             "SELECT tags FROM bookmarks WHERE article_id = ?", (article_id,)
         ).fetchone()
@@ -272,7 +272,7 @@ class Database:
         return [t.strip() for t in row["tags"].split(",") if t.strip()]
 
     def get_all_tags(self) -> list[str]:
-        """모든 태그를 중복 없이 반환한다."""
+        """Return all unique tags sorted."""
         rows = self._get_conn().execute(
             "SELECT tags FROM bookmarks WHERE tags IS NOT NULL AND tags != ''"
         ).fetchall()
@@ -285,8 +285,8 @@ class Database:
         return sorted(tag_set)
 
     def get_articles_by_tag(self, tag: str) -> list[Article]:
-        """특정 태그가 붙은 북마크 글을 반환한다."""
-        # 쉼표 구분 문자열에서 정확한 태그 매칭: 시작/중간/끝 패턴
+        """Return bookmarked articles with the given tag."""
+        # Exact tag matching in comma-separated string: start/middle/end patterns
         rows = self._get_conn().execute(
             "SELECT a.* FROM articles a JOIN bookmarks b ON a.id = b.article_id "
             "WHERE b.tags = ? "
@@ -299,7 +299,7 @@ class Database:
         return [self._row_to_article(row) for row in rows]
 
     def get_all_bookmark_tags(self) -> dict[str, list[str]]:
-        """모든 북마크의 태그를 ``{article_id: [tags]}`` 형태로 반환한다."""
+        """Return all bookmark tags as ``{article_id: [tags]}``."""
         rows = self._get_conn().execute(
             "SELECT article_id, tags FROM bookmarks "
             "WHERE tags IS NOT NULL AND tags != ''"
@@ -329,7 +329,7 @@ class Database:
         return {row["article_id"]: row["memo"] for row in rows}
 
     def get_recent_bookmarked_articles(self, days: int = 7) -> list[Article]:
-        """최근 N일간 북마크한 글을 반환한다."""
+        """Return articles bookmarked within the last N days."""
         rows = self._get_conn().execute(
             "SELECT a.* FROM articles a JOIN bookmarks b ON a.id = b.article_id "
             "WHERE b.bookmarked_at >= datetime('now', ?) ORDER BY b.bookmarked_at DESC, b.id DESC",

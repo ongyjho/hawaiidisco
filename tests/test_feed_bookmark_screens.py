@@ -33,7 +33,7 @@ class TestFeedItem:
     """Tests for FeedItem formatting."""
 
     def test_format_basic(self) -> None:
-        """기본 포맷에 피드 이름, URL, 글 수가 포함된다."""
+        """Default format includes feed name, URL, and article count."""
         feed = FeedConfig(url="https://a.com/feed", name="Feed A")
         item = FeedItem(feed, count=10)
         result = item._format()
@@ -42,7 +42,7 @@ class TestFeedItem:
         assert "10" in result
 
     def test_format_zero_count(self) -> None:
-        """글 수가 0일 때도 정상 포맷된다."""
+        """Formats correctly even when article count is zero."""
         feed = FeedConfig(url="https://new.com/feed", name="New Feed")
         item = FeedItem(feed, count=0)
         result = item._format()
@@ -54,7 +54,7 @@ class TestFeedListScreen:
     """Tests for FeedListScreen initialization."""
 
     def test_init_with_feeds(self) -> None:
-        """피드 데이터로 초기화된다."""
+        """Initializes with feed data."""
         feeds = [
             FeedConfig(url="https://a.com/feed", name="Feed A"),
             FeedConfig(url="https://b.com/feed", name="Feed B"),
@@ -65,7 +65,7 @@ class TestFeedListScreen:
         assert screen._counts == counts
 
     def test_init_empty(self) -> None:
-        """빈 피드 리스트로 초기화된다."""
+        """Initializes with an empty feed list."""
         screen = FeedListScreen([], {})
         assert len(screen._feeds) == 0
 
@@ -106,7 +106,7 @@ class TestBookmarkItem:
         assert "2025-01-15" in result
 
     def test_format_with_tags(self) -> None:
-        """태그가 있으면 표시된다."""
+        """Tags are displayed when present."""
         article = _make_article()
         item = BookmarkItem(article, tags=["tech", "python"])
         result = item._format()
@@ -114,7 +114,7 @@ class TestBookmarkItem:
         assert "python" in result
 
     def test_format_without_tags(self) -> None:
-        """태그가 없으면 태그 라인이 없다."""
+        """No tag line when tags are absent."""
         article = _make_article()
         item = BookmarkItem(article)
         result = item._format()
@@ -143,21 +143,21 @@ class TestTagItem:
     """Tests for TagItem formatting."""
 
     def test_format_basic(self) -> None:
-        """기본 포맷에 태그 이름과 글 수가 포함된다."""
+        """Default format includes tag name and article count."""
         item = TagItem("python", 5)
         result = item._format()
         assert "python" in result
         assert "5" in result
 
     def test_format_zero_count(self) -> None:
-        """글 수가 0일 때도 정상 포맷된다."""
+        """Formats correctly even when article count is zero."""
         item = TagItem("empty-tag", 0)
         result = item._format()
         assert "empty-tag" in result
         assert "0" in result
 
     def test_attributes(self) -> None:
-        """TagItem에 tag와 count 속성이 올바르게 설정된다."""
+        """TagItem has correct tag and count attributes."""
         item = TagItem("tech", 10)
         assert item.tag == "tech"
         assert item._count == 10

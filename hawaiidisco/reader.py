@@ -57,7 +57,7 @@ class _TextExtractor(HTMLParser):
 
 
 def _make_insecure_context() -> ssl.SSLContext:
-    """SSL 검증을 비활성화한 컨텍스트 (폴백 전용)."""
+    """Create an SSL context with verification disabled (fallback only)."""
     ctx = ssl.create_default_context()
     ctx.check_hostname = False
     ctx.verify_mode = ssl.CERT_NONE
@@ -77,7 +77,7 @@ _HEADERS = {
 
 
 def _urlopen(url: str, timeout: int, ctx: ssl.SSLContext | None = None) -> str:
-    """URL을 열어 HTML을 반환한다."""
+    """Open a URL and return the HTML content."""
     req = urllib.request.Request(url, headers=_HEADERS)
     kwargs: dict = {"timeout": timeout}
     if ctx is not None:
