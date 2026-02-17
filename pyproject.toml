@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "hawaiidisco"
-version = "0.1.0"
+version = "0.2.2"
 description = "Your AI-powered reading companion in the terminal"
 readme = "README.md"
 license = "MIT"
@@ -46,6 +46,9 @@ testpaths = ["tests"]
 [tool.ruff]
 target-version = "py311"
 line-length = 120
+
+[tool.hatch.build.targets.wheel]
+packages = ["hawaiidisco"]
 
 [project.scripts]
 hawaiidisco = "hawaiidisco.app:main"
