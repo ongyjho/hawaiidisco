@@ -176,6 +176,33 @@ class Database:
         )
         self._get_conn().commit()
 
+    def toggle_read(self, article_id: str) -> bool:
+        """Toggle the read state of an article. Return the new state."""
+        article = self.get_article(article_id)
+        if not article:
+            return False
+        new_state = not article.is_read
+        self._get_conn().execute(
+            "UPDATE articles SET is_read = ? WHERE id = ?",
+            (int(new_state), article_id),
+        )
+        self._get_conn().commit()
+        return new_state
+
+    def mark_all_read(self, *, feed_name: str | None = None) -> int:
+        """Mark articles as read. Optionally filter by feed. Return count of updated rows."""
+        if feed_name:
+            cursor = self._get_conn().execute(
+                "UPDATE articles SET is_read = 1 WHERE is_read = 0 AND feed_name = ?",
+                (feed_name,),
+            )
+        else:
+            cursor = self._get_conn().execute(
+                "UPDATE articles SET is_read = 1 WHERE is_read = 0"
+            )
+        self._get_conn().commit()
+        return cursor.rowcount
+
     def toggle_bookmark(self, article_id: str) -> bool:
         """Toggle the bookmark state of an article. Return the new state."""
         article = self.get_article(article_id)

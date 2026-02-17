@@ -925,6 +925,8 @@ class HawaiiDiscoApp(App):
         Binding("escape", "clear_search", "Clear search", show=False),
         Binding("f", "filter_bookmarks", "Filter"),
         Binding("u", "filter_unread", "Unread"),
+        Binding("R", "toggle_read", "Read/Unread"),
+        Binding("A", "mark_all_read", "All read"),
         Binding("a", "add_feed", "Add feed"),
         Binding("L", "feed_list", "Feeds"),
         Binding("t", "translate", "Translate"),
@@ -1263,6 +1265,28 @@ class HawaiiDiscoApp(App):
             status.set_message(t("unread_only"))
         else:
             status.set_message("")
+        self._reload_articles()
+
+    def action_toggle_read(self) -> None:
+        """Toggle read/unread state of the current article."""
+        article = self._get_current_article()
+        if not article:
+            return
+        new_state = self.db.toggle_read(article.id)
+        status = self.query_one(StatusBar)
+        if new_state:
+            status.set_message(t("marked_read", title=article.title[:30]))
+        else:
+            status.set_message(t("marked_unread", title=article.title[:30]))
+        self._reload_articles()
+
+    def action_mark_all_read(self) -> None:
+        """Mark all currently visible articles as read."""
+        count = self.db.mark_all_read(feed_name=self._feed_filter)
+        if count > 0:
+            self.query_one(StatusBar).set_message(t("all_marked_read", count=count))
+        else:
+            self.query_one(StatusBar).set_message(t("no_unread"))
         self._reload_articles()
 
     def action_add_feed(self) -> None:
