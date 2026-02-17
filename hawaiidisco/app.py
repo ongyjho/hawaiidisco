@@ -1623,21 +1623,22 @@ class HawaiiDiscoApp(App):
     def _save_digest_to_obsidian(self, content: str, article_count: int) -> None:
         """Save digest to Obsidian vault."""
         if not self.config.obsidian.enabled:
-            self.query_one(StatusBar).set_message(t("obsidian_not_configured"))
+            self.notify(t("obsidian_not_configured"), severity="warning")
             return
         if not validate_vault_path(self.config.obsidian):
-            self.query_one(StatusBar).set_message(
-                t("obsidian_vault_not_found", path=str(self.config.obsidian.vault_path))
+            self.notify(
+                t("obsidian_vault_not_found", path=str(self.config.obsidian.vault_path)),
+                severity="error",
             )
             return
         try:
             save_digest_note(
                 content, article_count, self.config.obsidian, self.config.digest.period_days
             )
-            self.query_one(StatusBar).set_message(t("digest_saved_obsidian"))
+            self.notify(t("digest_saved_obsidian"), severity="information")
         except Exception as exc:
-            self.query_one(StatusBar).set_message(
-                t("obsidian_save_failed", error=type(exc).__name__)
+            self.notify(
+                t("obsidian_save_failed", error=type(exc).__name__), severity="error"
             )
 
     # --- Background Auto-Refresh ---
