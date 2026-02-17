@@ -1,7 +1,7 @@
-"""AI 프롬프트 템플릿 (단일 영어 + 출력 언어 동적 주입)"""
+"""AI prompt templates (English base + dynamic output language injection)."""
 from __future__ import annotations
 
-# 언어 코드 → 언어명 매핑
+# Language code to language name mapping
 LANG_NAMES: dict[str, str] = {
     "en": "English",
     "ko": "Korean",
@@ -11,16 +11,16 @@ LANG_NAMES: dict[str, str] = {
     "de": "German",
 }
 
-# 번역 대상 언어 (영어 제외)
+# Translatable languages (excluding English)
 TRANSLATABLE_LANGS: frozenset[str] = frozenset({"ko", "ja", "zh-CN", "es", "de"})
 
 
 def get_lang_name(lang: str) -> str:
-    """언어 코드를 언어명으로 변환한다."""
+    """Convert a language code to its display name."""
     return LANG_NAMES.get(lang, lang)
 
 
-# 인사이트 생성 프롬프트 (persona 미설정 시 기본값 — 범용)
+# Insight prompt (default, generic — used when persona is not set)
 INSIGHT_PROMPT: str = (
     "You are an intelligent reader analyzing an article. "
     "Based on the title and description below, provide a sharp, opinionated insight in 1-2 sentences. "
@@ -34,7 +34,7 @@ INSIGHT_PROMPT: str = (
     "</article>"
 )
 
-# 사용자 맞춤 인사이트 프롬프트 (persona 설정 시)
+# Personalized insight prompt (used when persona is set)
 INSIGHT_PROMPT_PERSONA: str = (
     "You are an intelligent reader providing personalized insights.\n\n"
     "<reader_profile>\n{persona}\n</reader_profile>\n\n"
@@ -51,7 +51,7 @@ INSIGHT_PROMPT_PERSONA: str = (
     "</article>"
 )
 
-# 본문 번역 프롬프트
+# Body translation prompt
 TRANSLATE_BODY_PROMPT: str = (
     "Translate the English text below into natural {output_language}. "
     "For technical terms, include the English in parentheses "
@@ -60,7 +60,7 @@ TRANSLATE_BODY_PROMPT: str = (
     "<text>\n{text}\n</text>"
 )
 
-# 제목+설명 번역 프롬프트
+# Title + description translation prompt
 TRANSLATE_META_PROMPT: str = (
     "Translate the title and description of the English article below "
     "into natural {output_language}. "
@@ -75,10 +75,10 @@ TRANSLATE_META_PROMPT: str = (
     "</article>"
 )
 
-# 제목/설명 파싱 키 (항상 영어)
+# Title/description parsing keys (always English)
 TRANSLATE_META_KEYS: tuple[str, str] = ("Title:", "Description:")
 
-# 북마크 분석 프롬프트 (persona 미설정 시 기본값)
+# Bookmark analysis prompt (default, used when persona is not set)
 BOOKMARK_ANALYSIS_PROMPT: str = (
     "Below are articles I bookmarked.\n\n"
     "<bookmarks>\n{bookmarks}\n</bookmarks>\n\n"
@@ -88,7 +88,7 @@ BOOKMARK_ANALYSIS_PROMPT: str = (
     "3. Suggested areas to explore further"
 )
 
-# 북마크 분석 프롬프트 (persona 설정 시)
+# Bookmark analysis prompt (used when persona is set)
 BOOKMARK_ANALYSIS_PROMPT_PERSONA: str = (
     "Below are articles I bookmarked.\n\n"
     "<reader_profile>\n{persona}\n</reader_profile>\n\n"
@@ -100,10 +100,10 @@ BOOKMARK_ANALYSIS_PROMPT_PERSONA: str = (
     "3. Suggested areas to explore further, tailored to their role and goals"
 )
 
-# 북마크 분석 항목 템플릿
+# Bookmark analysis item template
 BOOKMARK_ANALYSIS_ITEM: str = (
     "- Title: {title}\n  Description: {description}\n  Insight: {insight}"
 )
 
-# 설명 없음 플레이스홀더
+# No-description placeholder
 NONE_TEXT: str = "(none)"

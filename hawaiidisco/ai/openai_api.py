@@ -37,7 +37,7 @@ class OpenAIProvider:
             if response.choices:
                 return response.choices[0].message.content.strip()
         except Exception:
-            logger.debug("OpenAI API 호출 실패", exc_info=True)
+            logger.debug("OpenAI API call failed", exc_info=True)
         return None
 
     def is_available(self) -> bool:

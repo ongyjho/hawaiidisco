@@ -42,7 +42,7 @@ class TestGenerateInsightDefault:
     """Tests for generate_insight without persona (default behavior)."""
 
     def test_uses_default_prompt_when_no_persona(self) -> None:
-        """persona 미설정 시 기본 INSIGHT_PROMPT를 사용한다."""
+        """Uses the default INSIGHT_PROMPT when persona is not set."""
         article = _make_article()
         provider = _make_provider()
 
@@ -53,7 +53,7 @@ class TestGenerateInsightDefault:
         assert "reader_profile" not in prompt_arg
 
     def test_returns_provider_response(self) -> None:
-        """AI provider의 응답을 반환한다."""
+        """Returns the AI provider's response."""
         article = _make_article()
         provider = _make_provider("This matters because...")
 
@@ -61,7 +61,7 @@ class TestGenerateInsightDefault:
         assert result == "This matters because..."
 
     def test_returns_none_when_unavailable(self) -> None:
-        """provider가 사용 불가하면 None을 반환한다."""
+        """Returns None when provider is unavailable."""
         article = _make_article()
         provider = _make_provider()
         provider.is_available.return_value = False
@@ -74,7 +74,7 @@ class TestGenerateInsightPersona:
     """Tests for generate_insight with persona."""
 
     def test_uses_persona_prompt_when_set(self) -> None:
-        """persona가 설정되면 INSIGHT_PROMPT_PERSONA를 사용한다."""
+        """Uses INSIGHT_PROMPT_PERSONA when persona is set."""
         article = _make_article()
         provider = _make_provider()
 
@@ -86,7 +86,7 @@ class TestGenerateInsightPersona:
         assert "tailored to the reader's context" in prompt_arg
 
     def test_persona_includes_article_info(self) -> None:
-        """persona 프롬프트에도 아티클 정보가 포함된다."""
+        """Persona prompt also includes article info."""
         article = _make_article(title="Kubernetes 2.0", description="Major update")
         provider = _make_provider()
 
@@ -98,7 +98,7 @@ class TestGenerateInsightPersona:
         assert "Korean" in prompt_arg
 
     def test_empty_persona_uses_default(self) -> None:
-        """빈 문자열 persona는 기본 프롬프트를 사용한다."""
+        """Empty string persona uses the default prompt."""
         article = _make_article()
         provider = _make_provider()
 
@@ -113,7 +113,7 @@ class TestGetOrGenerateInsightPersona:
     """Tests for get_or_generate_insight with persona parameter."""
 
     def test_passes_persona_to_generate(self) -> None:
-        """persona를 generate_insight에 전달한다."""
+        """Passes persona to generate_insight."""
         article = _make_article()
         provider = _make_provider("Personalized insight")
         db = MagicMock()
@@ -125,7 +125,7 @@ class TestGetOrGenerateInsightPersona:
         assert "PM at startup" in prompt_arg
 
     def test_cached_insight_skips_generation(self) -> None:
-        """캐시된 인사이트가 있으면 생성을 건너뛴다."""
+        """Skips generation when a cached insight exists."""
         article = _make_article(insight="Cached insight")
         provider = _make_provider()
         db = MagicMock()
@@ -139,14 +139,14 @@ class TestInsightConfigPersona:
     """Tests for persona field in InsightConfig."""
 
     def test_default_persona_empty(self, tmp_path: Path) -> None:
-        """persona 기본값은 빈 문자열이다."""
+        """Default persona is an empty string."""
         config_file = tmp_path / "config.yml"
         config_file.write_text("feeds: []\n", encoding="utf-8")
         config = load_config(config_file)
         assert config.insight.persona == ""
 
     def test_persona_from_config(self, tmp_path: Path) -> None:
-        """config에서 persona를 읽을 수 있다."""
+        """Persona can be read from config."""
         config_file = tmp_path / "config.yml"
         data = {
             "feeds": [],

@@ -84,20 +84,20 @@ class TestThemeConfig:
     """Tests for theme configuration."""
 
     def test_default_theme(self, config_file: Path) -> None:
-        """기본 테마는 textual-dark이다."""
+        """Default theme is textual-dark."""
         config_file.write_text("feeds: []\n", encoding="utf-8")
         config = load_config(config_file)
         assert config.theme == "textual-dark"
 
     def test_custom_theme(self, config_file: Path) -> None:
-        """커스텀 테마를 로딩할 수 있다."""
+        """Custom theme can be loaded."""
         data = {"theme": "nord", "feeds": []}
         config_file.write_text(yaml.dump(data), encoding="utf-8")
         config = load_config(config_file)
         assert config.theme == "nord"
 
     def test_theme_from_full_config(self, config_file: Path) -> None:
-        """전체 설정에서 테마를 읽을 수 있다."""
+        """Theme can be read from full config."""
         data = {
             "language": "ko",
             "theme": "dracula",
@@ -218,7 +218,7 @@ class TestRemoveFeed:
     """Tests for the remove_feed function."""
 
     def test_remove_existing_feed(self, tmp_path: Path, monkeypatch) -> None:
-        """존재하는 피드를 제거하면 True를 반환한다."""
+        """Removing an existing feed returns True."""
         config_path = tmp_path / "config.yml"
         data = {
             "feeds": [
@@ -232,14 +232,14 @@ class TestRemoveFeed:
         result = remove_feed("https://a.com/feed")
         assert result is True
 
-        # 파일에서 피드가 제거되었는지 확인
+        # Verify the feed was removed from the file
         with open(config_path, encoding="utf-8") as f:
             updated = yaml.safe_load(f)
         assert len(updated["feeds"]) == 1
         assert updated["feeds"][0]["url"] == "https://b.com/feed"
 
     def test_remove_nonexistent_feed(self, tmp_path: Path, monkeypatch) -> None:
-        """존재하지 않는 피드를 제거하면 False를 반환한다."""
+        """Removing a non-existent feed returns False."""
         config_path = tmp_path / "config.yml"
         data = {"feeds": [{"url": "https://a.com/feed", "name": "Feed A"}]}
         config_path.write_text(yaml.dump(data), encoding="utf-8")

@@ -21,7 +21,7 @@ class ArticleItem(ListItem):
         self.tags = tags or []
 
     def _on_click(self, event: events.Click) -> None:
-        """클릭 시 하이라이트만 이동, ListItem._on_click의 _ChildClicked 발생을 방지."""
+        """Move highlight only on click; prevent ListItem._on_click from posting _ChildClicked."""
         event.prevent_default()
         parent = self.parent
         if isinstance(parent, Timeline):
@@ -64,7 +64,7 @@ class ArticleRow(Static):
         time_str = _relative_time(a.published_at or a.fetched_at)
         lines.append(f"  [cyan]{_escape(a.feed_name)}[/] · [dim]{time_str}[/]")
 
-        # 태그 표시
+        # Show tags
         if self._tags:
             lines.append(f"  [dim]🏷 {_escape(', '.join(self._tags))}[/]")
 
@@ -119,7 +119,7 @@ class Timeline(ListView):
         tags: dict[str, list[str]] | None = None,
     ) -> None:
         """Refresh the article list."""
-        # 이전 하이라이트 위치 저장
+        # Save previous highlight position
         highlighted = self.get_highlighted_article()
         current_id = highlighted.id if highlighted else None
 
@@ -129,7 +129,7 @@ class Timeline(ListView):
         for article in articles:
             self.append(ArticleItem(article, tags.get(article.id)))
 
-        # 이전 하이라이트 위치 복원
+        # Restore previous highlight position
         if current_id:
             for i, article in enumerate(articles):
                 if article.id == current_id:

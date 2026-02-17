@@ -12,9 +12,9 @@ _MAX_OPML_SIZE = 1_048_576
 
 
 def parse_opml(source: str | Path) -> list[FeedConfig]:
-    """OPML 파일을 파싱하여 FeedConfig 리스트를 반환한다.
+    """Parse an OPML file and return a list of FeedConfig.
 
-    중첩된 outline 요소를 재귀적으로 탐색한다.
+    Recursively traverses nested outline elements.
     """
     path = Path(source)
 
@@ -41,13 +41,13 @@ def parse_opml(source: str | Path) -> list[FeedConfig]:
 
 
 def _collect_feeds(element: ET.Element, feeds: list[FeedConfig]) -> None:
-    """outline 요소를 재귀 탐색하여 xmlUrl이 있는 항목을 수집한다."""
+    """Recursively traverse outline elements and collect items with xmlUrl."""
     for outline in element.findall("outline"):
         xml_url = outline.get("xmlUrl")
         if xml_url and xml_url.startswith(("http://", "https://")):
             name = outline.get("title") or outline.get("text") or xml_url
             feeds.append(FeedConfig(url=xml_url, name=name))
-        # 하위 outline 재귀 탐색 (카테고리 폴더)
+        # Recurse into child outlines (category folders)
         _collect_feeds(outline, feeds)
 
 
@@ -56,7 +56,7 @@ def export_opml(
     output_path: str | Path,
     title: str = "Hawaii Disco Feeds",
 ) -> Path:
-    """피드 목록을 OPML 2.0 파일로 내보낸다."""
+    """Export a feed list to an OPML 2.0 file."""
     opml = ET.Element("opml", version="2.0")
 
     head = ET.SubElement(opml, "head")

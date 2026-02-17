@@ -1,4 +1,4 @@
-"""보안 수정사항에 대한 테스트."""
+"""Tests for security fixes."""
 from __future__ import annotations
 
 from pathlib import Path
@@ -10,7 +10,7 @@ from hawaiidisco.db import Database
 from hawaiidisco.i18n import set_lang
 
 
-# --- _safe_path: Path Traversal 방어 ---
+# --- _safe_path: Path traversal defense ---
 
 
 class TestSafePath:
@@ -27,12 +27,12 @@ class TestSafePath:
             _safe_path(tmp_path, "foo/../../etc/passwd")
 
     def test_absolute_path_in_filename(self, tmp_path: Path) -> None:
-        # 절대 경로가 filename으로 오면 Path / 연산에서 절대경로 우선
+        # When filename is an absolute path, Path / uses the absolute path
         result = _safe_path(tmp_path, "normal-file.md")
         assert result.is_relative_to(tmp_path.resolve())
 
 
-# --- _slugify: 특수문자 제거 ---
+# --- _slugify: Special character removal ---
 
 
 class TestSlugify:
@@ -53,7 +53,7 @@ class TestSlugify:
         assert len(_slugify(long_title, max_len=50)) <= 50
 
 
-# --- LIKE 와일드카드 이스케이프 ---
+# --- LIKE wildcard escaping ---
 
 
 class TestLikeEscape:
@@ -78,20 +78,20 @@ class TestLikeEscape:
     def test_percent_in_search(self) -> None:
         self._insert("100% Pure Python")
         self._insert("Python Tips")
-        # '%'로 검색하면 '100% Pure Python'만 매칭
+        # Searching for '%' should only match '100% Pure Python'
         results = self.db.get_articles(search="%")
         assert len(results) == 1
         assert "100%" in results[0].title
 
     def test_search_by_description(self) -> None:
-        """description 컬럼으로 검색할 수 있다."""
+        """Can search by description column."""
         self._insert("Generic Title", description="unique_keyword_in_desc")
         results = self.db.get_articles(search="unique_keyword_in_desc")
         assert len(results) == 1
         assert results[0].title == "Generic Title"
 
     def test_search_by_insight(self) -> None:
-        """insight 컬럼으로 검색할 수 있다."""
+        """Can search by insight column."""
         self._insert("Generic Title2", article_id="insight-1")
         self.db.set_insight("insight-1", "special_insight_text")
         results = self.db.get_articles(search="special_insight_text")
@@ -99,7 +99,7 @@ class TestLikeEscape:
         assert results[0].id == "insight-1"
 
     def test_search_by_translated_title(self) -> None:
-        """translated_title 컬럼으로 검색할 수 있다."""
+        """Can search by translated_title column."""
         self._insert("English Title", article_id="trans-1")
         self.db.set_translation("trans-1", "번역된 제목", "번역된 설명")
         results = self.db.get_articles(search="번역된 제목")
@@ -109,28 +109,28 @@ class TestLikeEscape:
     def test_underscore_in_search(self) -> None:
         self._insert("my_variable_name")
         self._insert("my variable name")
-        # '_'로 검색하면 '_'가 포함된 것만 매칭
+        # Searching for '_' should only match entries containing '_'
         results = self.db.get_articles(search="_")
         assert len(results) == 1
         assert "_" in results[0].title
 
 
-# --- SSL 폴백 패턴 ---
+# --- SSL fallback pattern ---
 
 
 class TestSSLFallback:
     def test_fetch_error_hides_details(self) -> None:
-        """에러 메시지에 예외 클래스명만 노출되는지 확인."""
+        """Error message exposes only the exception class name."""
         from hawaiidisco.reader import fetch_article_text
         set_lang("en")
-        # 존재하지 않는 호스트로 요청 (insecure fallback 비활성)
+        # Request to a non-existent host (insecure fallback disabled)
         result = fetch_article_text("https://this-host-does-not-exist.invalid", timeout=2)
-        # 예외 스택트레이스나 상세 메시지 대신 클래스명만 포함
+        # Contains only the class name, not stack trace or detailed message
         assert "Traceback" not in result
         assert "Could not fetch page" in result
 
     def test_insecure_ssl_disabled_by_default(self) -> None:
-        """allow_insecure_ssl=False일 때 SSL 실패 시 insecure fallback을 시도하지 않는다."""
+        """Does not attempt insecure fallback on SSL failure when allow_insecure_ssl=False."""
         from hawaiidisco.reader import fetch_article_text
         set_lang("en")
         result = fetch_article_text(
@@ -141,7 +141,7 @@ class TestSSLFallback:
         assert "Could not fetch page" in result
 
 
-# --- URL 스키마 검증 ---
+# --- URL scheme validation ---
 
 
 class TestURLSchemeValidation:
@@ -166,7 +166,7 @@ class TestURLSchemeValidation:
         assert not url.startswith(("http://", "https://"))
 
 
-# --- AppleScript 이스케이프 ---
+# --- AppleScript escaping ---
 
 
 class TestAppleScriptEscape:
@@ -182,7 +182,7 @@ class TestAppleScriptEscape:
         assert "\\\\" in safe
 
 
-# --- 디렉토리 권한 ---
+# --- Directory permissions ---
 
 
 class TestDirectoryPermissions:
@@ -199,29 +199,29 @@ class TestDirectoryPermissions:
 
         assert db_dir.exists()
         assert bm_dir.exists()
-        # 소유자만 rwx
+        # Owner-only rwx
         assert oct(db_dir.stat().st_mode & 0o777) == "0o700"
         assert oct(bm_dir.stat().st_mode & 0o777) == "0o700"
 
 
-# --- DB 파일 권한 ---
+# --- DB file permissions ---
 
 
 class TestDatabaseFilePermissions:
     def test_db_file_permission_600(self, tmp_path: Path) -> None:
-        """DB 파일이 소유자만 읽기/쓰기 가능하도록 0o600으로 설정되는지 확인."""
+        """DB file permissions are set to 0o600 (owner read/write only)."""
         db_path = tmp_path / "test.db"
         db = Database(db_path)
         db.close()
         assert oct(db_path.stat().st_mode & 0o777) == "0o600"
 
 
-# --- OPML 파일 크기 제한 ---
+# --- OPML file size limit ---
 
 
 class TestOpmlSizeLimit:
     def test_large_opml_rejected(self, tmp_path: Path) -> None:
-        """1 MB보다 큰 OPML 파일은 거부된다."""
+        """OPML files larger than 1 MB are rejected."""
         from hawaiidisco.opml import parse_opml
 
         large_file = tmp_path / "large.opml"
@@ -230,12 +230,12 @@ class TestOpmlSizeLimit:
             parse_opml(large_file)
 
 
-# --- OPML URL scheme 검증 ---
+# --- OPML URL scheme validation ---
 
 
 class TestOpmlUrlSchemeValidation:
     def test_non_http_urls_filtered(self, tmp_path: Path) -> None:
-        """OPML에서 http/https가 아닌 URL은 무시된다."""
+        """Non http/https URLs in OPML are ignored."""
         from hawaiidisco.opml import parse_opml
 
         opml_content = """<?xml version="1.0" encoding="UTF-8"?>
@@ -255,12 +255,12 @@ class TestOpmlUrlSchemeValidation:
         assert feeds[0].url == "https://example.com/feed.xml"
 
 
-# --- Config allow_insecure_ssl 기본값 ---
+# --- Config allow_insecure_ssl default ---
 
 
 class TestConfigAllowInsecureSsl:
     def test_default_is_false(self, tmp_path: Path) -> None:
-        """allow_insecure_ssl 기본값이 False인지 확인."""
+        """allow_insecure_ssl defaults to False."""
         from hawaiidisco.config import load_config
 
         config_file = tmp_path / "config.yml"
@@ -269,7 +269,7 @@ class TestConfigAllowInsecureSsl:
         assert config.allow_insecure_ssl is False
 
     def test_explicit_true(self, tmp_path: Path) -> None:
-        """allow_insecure_ssl을 true로 설정할 수 있는지 확인."""
+        """allow_insecure_ssl can be set to true."""
         from hawaiidisco.config import load_config
 
         config_file = tmp_path / "config.yml"

@@ -206,7 +206,7 @@ class TestDeleteArticlesByFeed:
     """Tests for delete_articles_by_feed."""
 
     def test_delete_articles(self, db: Database) -> None:
-        """특정 피드의 글을 모두 삭제한다."""
+        """Deletes all articles for a specific feed."""
         db.upsert_article("d-1", "Feed A", "A1", "https://a.com/1", None, None)
         db.upsert_article("d-2", "Feed A", "A2", "https://a.com/2", None, None)
         db.upsert_article("d-3", "Feed B", "B1", "https://b.com/1", None, None)
@@ -217,17 +217,17 @@ class TestDeleteArticlesByFeed:
         assert remaining[0].feed_name == "Feed B"
 
     def test_delete_cascade_bookmarks(self, db: Database) -> None:
-        """피드 삭제 시 해당 글의 북마크도 함께 삭제된다."""
+        """Deleting a feed also deletes its article bookmarks."""
         db.upsert_article("d-4", "Feed X", "X1", "https://x.com/1", None, None)
         db.toggle_bookmark("d-4")
         db.set_bookmark_memo("d-4", "메모")
         deleted = db.delete_articles_by_feed("Feed X")
         assert deleted == 1
-        # 북마크도 삭제되었는지 확인
+        # Verify bookmarks were also deleted
         assert db.get_bookmark_memo("d-4") is None
 
     def test_delete_nonexistent_feed(self, db: Database) -> None:
-        """존재하지 않는 피드 삭제 시 0을 반환한다."""
+        """Deleting a non-existent feed returns 0."""
         deleted = db.delete_articles_by_feed("Nonexistent")
         assert deleted == 0
 
@@ -236,7 +236,7 @@ class TestFeedNameFilter:
     """Tests for get_articles feed_name filter."""
 
     def test_filter_by_feed_name(self, db: Database) -> None:
-        """feed_name 필터로 특정 피드의 글만 반환한다."""
+        """Filters articles by feed_name."""
         db.upsert_article("f-1", "Feed A", "Article 1", "https://a.com/1", None, None)
         db.upsert_article("f-2", "Feed B", "Article 2", "https://b.com/1", None, None)
         db.upsert_article("f-3", "Feed A", "Article 3", "https://a.com/2", None, None)
@@ -245,20 +245,20 @@ class TestFeedNameFilter:
         assert all(a.feed_name == "Feed A" for a in results)
 
     def test_filter_no_match(self, db: Database) -> None:
-        """존재하지 않는 피드 이름으로 필터하면 빈 리스트를 반환한다."""
+        """Filtering by a non-existent feed name returns an empty list."""
         _insert_sample(db, "f-4")
         results = db.get_articles(feed_name="Nonexistent")
         assert results == []
 
     def test_filter_none_returns_all(self, db: Database) -> None:
-        """feed_name이 None이면 모든 글을 반환한다."""
+        """Returns all articles when feed_name is None."""
         db.upsert_article("f-5", "Feed A", "A1", "https://a.com/1", None, None)
         db.upsert_article("f-6", "Feed B", "B1", "https://b.com/1", None, None)
         results = db.get_articles(feed_name=None)
         assert len(results) == 2
 
     def test_filter_with_search_combined(self, db: Database) -> None:
-        """feed_name과 search를 동시에 적용할 수 있다."""
+        """feed_name and search can be combined."""
         db.upsert_article("f-7", "Feed A", "Python Tips", "https://a.com/1", None, None)
         db.upsert_article("f-8", "Feed A", "Rust Tips", "https://a.com/2", None, None)
         db.upsert_article("f-9", "Feed B", "Python Guide", "https://b.com/1", None, None)
@@ -304,7 +304,7 @@ class TestBookmarkTags:
     """Tests for bookmark tag CRUD."""
 
     def test_set_and_get_tags(self, db: Database) -> None:
-        """태그를 저장하고 조회할 수 있다."""
+        """Tags can be saved and retrieved."""
         _insert_sample(db, "tag-1")
         db.toggle_bookmark("tag-1")
         db.set_bookmark_tags("tag-1", ["tech", "python"])
@@ -312,14 +312,14 @@ class TestBookmarkTags:
         assert tags == ["tech", "python"]
 
     def test_get_tags_empty_default(self, db: Database) -> None:
-        """태그가 없으면 빈 리스트를 반환한다."""
+        """Returns an empty list when no tags exist."""
         _insert_sample(db, "tag-2")
         db.toggle_bookmark("tag-2")
         tags = db.get_bookmark_tags("tag-2")
         assert tags == []
 
     def test_set_empty_tags_clears(self, db: Database) -> None:
-        """빈 리스트로 설정하면 태그를 제거한다."""
+        """Setting an empty list removes tags."""
         _insert_sample(db, "tag-3")
         db.toggle_bookmark("tag-3")
         db.set_bookmark_tags("tag-3", ["tech"])
@@ -328,12 +328,12 @@ class TestBookmarkTags:
         assert tags == []
 
     def test_get_tags_nonexistent_article(self, db: Database) -> None:
-        """존재하지 않는 article_id는 빈 리스트를 반환한다."""
+        """Non-existent article_id returns an empty list."""
         tags = db.get_bookmark_tags("nonexistent")
         assert tags == []
 
     def test_get_all_tags(self, db: Database) -> None:
-        """모든 태그를 중복 없이 정렬하여 반환한다."""
+        """Returns all unique tags sorted."""
         _insert_sample(db, "tag-a1")
         db.toggle_bookmark("tag-a1")
         db.set_bookmark_tags("tag-a1", ["python", "tech"])
@@ -346,11 +346,11 @@ class TestBookmarkTags:
         assert all_tags == ["python", "rust", "tech"]
 
     def test_get_all_tags_empty(self, db: Database) -> None:
-        """태그가 없으면 빈 리스트를 반환한다."""
+        """Returns an empty list when no tags exist."""
         assert db.get_all_tags() == []
 
     def test_get_articles_by_tag(self, db: Database) -> None:
-        """특정 태그가 붙은 글만 반환한다."""
+        """Returns only articles with the given tag."""
         _insert_sample(db, "tag-b1")
         db.toggle_bookmark("tag-b1")
         db.set_bookmark_tags("tag-b1", ["python", "tech"])
@@ -371,17 +371,17 @@ class TestBookmarkTags:
         assert len(tech_articles) == 2
 
     def test_get_articles_by_tag_no_partial_match(self, db: Database) -> None:
-        """부분 문자열 매칭이 발생하지 않는다."""
+        """Partial substring matching does not occur."""
         _insert_sample(db, "tag-c1")
         db.toggle_bookmark("tag-c1")
         db.set_bookmark_tags("tag-c1", ["python"])
 
-        # "py"로 검색하면 매칭되지 않아야 함
+        # Searching for "py" should not match
         results = db.get_articles_by_tag("py")
         assert len(results) == 0
 
     def test_get_articles_by_tag_single_tag(self, db: Database) -> None:
-        """단일 태그(쉼표 없는 경우)도 정확히 매칭된다."""
+        """Single tag (no comma) is matched exactly."""
         _insert_sample(db, "tag-d1")
         db.toggle_bookmark("tag-d1")
         db.set_bookmark_tags("tag-d1", ["solo"])
@@ -390,29 +390,29 @@ class TestBookmarkTags:
         assert len(results) == 1
 
     def test_get_all_bookmark_tags(self, db: Database) -> None:
-        """모든 북마크의 태그를 dict로 반환한다."""
+        """Returns all bookmark tags as a dict."""
         _insert_sample(db, "tag-e1")
         db.toggle_bookmark("tag-e1")
         db.set_bookmark_tags("tag-e1", ["ai", "ml"])
 
         _insert_sample(db, "tag-e2")
         db.toggle_bookmark("tag-e2")
-        # 태그 없음
+        # No tags
 
         result = db.get_all_bookmark_tags()
         assert result == {"tag-e1": ["ai", "ml"]}
 
 
 class TestGetRecentBookmarkedArticles:
-    """최근 N일간 북마크한 글 조회 테스트."""
+    """Tests for querying recently bookmarked articles."""
 
     def test_empty_returns_empty_list(self, db: Database) -> None:
-        """북마크가 없으면 빈 리스트를 반환한다."""
+        """Returns an empty list when no bookmarks exist."""
         result = db.get_recent_bookmarked_articles(days=7)
         assert result == []
 
     def test_recent_bookmark_returned(self, db: Database) -> None:
-        """방금 북마크한 글이 조회된다."""
+        """Recently bookmarked article is returned."""
         _insert_sample(db, "r-1")
         db.toggle_bookmark("r-1")
         result = db.get_recent_bookmarked_articles(days=7)
@@ -420,23 +420,23 @@ class TestGetRecentBookmarkedArticles:
         assert result[0].id == "r-1"
 
     def test_unbookmarked_article_excluded(self, db: Database) -> None:
-        """북마크하지 않은 글은 제외된다."""
+        """Non-bookmarked articles are excluded."""
         _insert_sample(db, "r-2")
         result = db.get_recent_bookmarked_articles(days=7)
         assert result == []
 
     def test_multiple_bookmarks_ordered_desc(self, db: Database) -> None:
-        """여러 북마크가 최신순으로 반환된다."""
+        """Multiple bookmarks are returned in descending order."""
         for i in range(3):
             _insert_sample(db, f"r-{i}")
             db.toggle_bookmark(f"r-{i}")
         result = db.get_recent_bookmarked_articles(days=7)
         assert len(result) == 3
-        # 마지막에 북마크한 것이 첫 번째
+        # Last bookmarked item comes first
         assert result[0].id == "r-2"
 
     def test_from_other_thread(self, db: Database) -> None:
-        """다른 스레드에서도 조회할 수 있다."""
+        """Can be queried from another thread."""
         _insert_sample(db, "r-t")
         db.toggle_bookmark("r-t")
         errors: list[Exception] = []
@@ -452,5 +452,5 @@ class TestGetRecentBookmarkedArticles:
         t.start()
         t.join()
 
-        assert not errors, f"스레드에서 에러 발생: {errors[0]}"
+        assert not errors, f"Error in thread: {errors[0]}"
         assert len(results) == 1
