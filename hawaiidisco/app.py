@@ -924,6 +924,7 @@ class HawaiiDiscoApp(App):
         Binding("slash", "search", "Search"),
         Binding("escape", "clear_search", "Clear search", show=False),
         Binding("f", "filter_bookmarks", "Filter"),
+        Binding("u", "filter_unread", "Unread"),
         Binding("a", "add_feed", "Add feed"),
         Binding("L", "feed_list", "Feeds"),
         Binding("t", "translate", "Translate"),
@@ -946,6 +947,7 @@ class HawaiiDiscoApp(App):
         self._search_query: str | None = None
         self._feed_filter: str | None = None
         self._tag_filter: str | None = None
+        self._unread_filter: bool = False
         self.theme = self.config.theme
 
         # Validate Obsidian vault path at startup
@@ -1018,6 +1020,7 @@ class HawaiiDiscoApp(App):
                 bookmarked_only=self._bookmark_filter,
                 search=self._search_query,
                 feed_name=self._feed_filter,
+                unread_only=self._unread_filter,
             )
         # 태그 정보를 일괄 조회하여 Timeline에 전달
         all_tags = self.db.get_all_bookmark_tags()
@@ -1220,7 +1223,7 @@ class HawaiiDiscoApp(App):
             self._reload_articles()
 
     def action_clear_search(self) -> None:
-        """검색, 태그 필터, 피드 필터, 북마크 필터를 해제하고 원래 리스트로 복원."""
+        """검색, 태그 필터, 피드 필터, 안읽은글 필터, 북마크 필터를 해제하고 원래 리스트로 복원."""
         if self._search_query is not None:
             self._search_query = None
             self.query_one(StatusBar).set_message(t("search_cleared"))
@@ -1233,6 +1236,10 @@ class HawaiiDiscoApp(App):
             self._feed_filter = None
             self.query_one(StatusBar).set_message(t("feed_filter_cleared"))
             self._reload_articles()
+        elif self._unread_filter:
+            self._unread_filter = False
+            self.query_one(StatusBar).set_message(t("unread_filter_cleared"))
+            self._reload_articles()
         elif self._bookmark_filter:
             self._bookmark_filter = False
             self.query_one(StatusBar).set_message("")
@@ -1243,6 +1250,15 @@ class HawaiiDiscoApp(App):
         status = self.query_one(StatusBar)
         if self._bookmark_filter:
             status.set_message(t("bookmarks_only"))
+        else:
+            status.set_message("")
+        self._reload_articles()
+
+    def action_filter_unread(self) -> None:
+        self._unread_filter = not self._unread_filter
+        status = self.query_one(StatusBar)
+        if self._unread_filter:
+            status.set_message(t("unread_only"))
         else:
             status.set_message("")
         self._reload_articles()
