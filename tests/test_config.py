@@ -6,7 +6,7 @@ from pathlib import Path
 import pytest
 import yaml
 
-from hawaiidisco.config import load_config, _resolve_env, _prompt_yn, remove_feed, setup_obsidian
+from hawaiidisco.config import load_config, _resolve_env, _prompt_yn, remove_feed, setup_obsidian, setup_notion
 from hawaiidisco.i18n import get_lang, Lang
 
 
@@ -364,3 +364,144 @@ class TestSetupObsidian:
         assert data["obsidian"]["include_insight"] is False
         assert data["obsidian"]["include_translation"] is True
         assert data["obsidian"]["tags_prefix"] == "hd"
+
+
+class TestNotionConfig:
+    """Tests for Notion configuration loading."""
+
+    def test_default_notion_disabled(self, config_file: Path) -> None:
+        """Notion is disabled by default when not in config."""
+        config_file.write_text("feeds: []\n", encoding="utf-8")
+        config = load_config(config_file)
+        assert config.notion.enabled is False
+        assert config.notion.api_key == ""
+        assert config.notion.mode == "page"
+
+    def test_notion_config_loading(self, config_file: Path) -> None:
+        """Full notion config is parsed correctly."""
+        data = {
+            "feeds": [],
+            "notion": {
+                "enabled": True,
+                "api_key": "ntn_test_key",
+                "mode": "database",
+                "database_id": "abc123",
+                "parent_page_id": "",
+                "auto_save": False,
+                "include_insight": False,
+                "include_translation": True,
+                "tags_prefix": "hd",
+            },
+        }
+        config_file.write_text(yaml.dump(data), encoding="utf-8")
+        config = load_config(config_file)
+        assert config.notion.enabled is True
+        assert config.notion.api_key == "ntn_test_key"
+        assert config.notion.mode == "database"
+        assert config.notion.database_id == "abc123"
+        assert config.notion.auto_save is False
+        assert config.notion.include_insight is False
+        assert config.notion.tags_prefix == "hd"
+
+    def test_notion_api_key_env_resolution(self, config_file: Path, monkeypatch) -> None:
+        """Notion API key with ${ENV_VAR} is resolved."""
+        monkeypatch.setenv("NOTION_API_KEY", "resolved-notion-key")
+        data = {
+            "feeds": [],
+            "notion": {"enabled": True, "api_key": "${NOTION_API_KEY}"},
+        }
+        config_file.write_text(yaml.dump(data), encoding="utf-8")
+        config = load_config(config_file)
+        assert config.notion.api_key == "resolved-notion-key"
+
+    def test_notion_defaults_when_partial(self, config_file: Path) -> None:
+        """Missing notion fields use defaults."""
+        data = {
+            "feeds": [],
+            "notion": {
+                "enabled": True,
+                "api_key": "key",
+                "database_id": "db-1",
+            },
+        }
+        config_file.write_text(yaml.dump(data), encoding="utf-8")
+        config = load_config(config_file)
+        assert config.notion.mode == "page"
+        assert config.notion.auto_save is True
+        assert config.notion.include_insight is True
+        assert config.notion.tags_prefix == "hawaiidisco"
+
+    def test_digest_save_to_notion(self, config_file: Path) -> None:
+        """DigestConfig.save_to_notion is parsed."""
+        data = {
+            "feeds": [],
+            "digest": {"save_to_notion": True},
+        }
+        config_file.write_text(yaml.dump(data), encoding="utf-8")
+        config = load_config(config_file)
+        assert config.digest.save_to_notion is True
+
+    def test_digest_save_to_notion_default(self, config_file: Path) -> None:
+        """DigestConfig.save_to_notion defaults to False."""
+        config_file.write_text("feeds: []\n", encoding="utf-8")
+        config = load_config(config_file)
+        assert config.digest.save_to_notion is False
+
+
+class TestSetupNotion:
+    """Tests for the interactive Notion setup wizard."""
+
+    def test_creates_config(self, tmp_path: Path, monkeypatch) -> None:
+        """setup_notion writes notion section to config.yml."""
+        config_path = tmp_path / "config.yml"
+        config_path.write_text("language: en\nfeeds: []\n", encoding="utf-8")
+        monkeypatch.setattr("hawaiidisco.config.CONFIG_PATH", config_path)
+
+        # Mock check_notion_connection to succeed
+        monkeypatch.setattr(
+            "hawaiidisco.notion.check_notion_connection", lambda config: True
+        )
+
+        # api_key, mode(default=page), parent_page_id, auto_save(Y), insight(Y), translation(Y), tags(default)
+        inputs = iter(["ntn_secret_key", "", "page-123", "", "", "", ""])
+        monkeypatch.setattr("builtins.input", lambda prompt="": next(inputs))
+
+        setup_notion()
+
+        with open(config_path, encoding="utf-8") as f:
+            data = yaml.safe_load(f)
+
+        assert data["notion"]["enabled"] is True
+        assert data["notion"]["api_key"] == "ntn_secret_key"
+        assert data["notion"]["mode"] == "page"
+        assert data["notion"]["parent_page_id"] == "page-123"
+        assert data["notion"]["auto_save"] is True
+
+    def test_preserves_existing_config(self, tmp_path: Path, monkeypatch) -> None:
+        """setup_notion preserves other config sections."""
+        config_path = tmp_path / "config.yml"
+        config_path.write_text(
+            "language: ko\nfeeds:\n- url: https://example.com\n  name: Test\n",
+            encoding="utf-8",
+        )
+        monkeypatch.setattr("hawaiidisco.config.CONFIG_PATH", config_path)
+        monkeypatch.setattr(
+            "hawaiidisco.notion.check_notion_connection", lambda config: True
+        )
+
+        inputs = iter(["ntn_key", "database", "db-abc", "", "", "", ""])
+        monkeypatch.setattr("builtins.input", lambda prompt="": next(inputs))
+
+        setup_notion()
+
+        with open(config_path, encoding="utf-8") as f:
+            data = yaml.safe_load(f)
+        assert data["language"] == "ko"
+        assert len(data["feeds"]) == 1
+        assert data["notion"]["enabled"] is True
+        assert data["notion"]["mode"] == "database"
+        assert data["notion"]["database_id"] == "db-abc"
+
+        # restore
+        from hawaiidisco.i18n import set_lang
+        set_lang("en")
