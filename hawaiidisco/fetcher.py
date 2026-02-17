@@ -94,6 +94,6 @@ def fetch_all_feeds(feeds: list[FeedConfig], db: Database, *, allow_insecure_ssl
         try:
             total_new += fetch_feed(feed_config, db, allow_insecure_ssl=allow_insecure_ssl)
         except Exception:
-            logger.debug("피드 가져오기 실패: %s", feed_config.url, exc_info=True)
+            logger.debug("Failed to fetch feed: %s", feed_config.url, exc_info=True)
             continue
     return total_new

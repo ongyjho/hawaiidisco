@@ -13,10 +13,10 @@ from hawaiidisco.opml import parse_opml, export_opml
 
 
 class TestParseOpml:
-    """OPML 파일 파싱 테스트."""
+    """Tests for OPML file parsing."""
 
     def test_basic_opml(self, tmp_path: Path) -> None:
-        """기본 OPML 파일에서 피드를 파싱한다."""
+        """Parses feeds from a basic OPML file."""
         opml_file = tmp_path / "basic.opml"
         opml_file.write_text(
             '<?xml version="1.0" encoding="UTF-8"?>\n'
@@ -36,7 +36,7 @@ class TestParseOpml:
         assert feeds[1].name == "Feed B"
 
     def test_nested_opml(self, tmp_path: Path) -> None:
-        """중첩된 카테고리 outline에서 피드를 재귀적으로 파싱한다."""
+        """Recursively parses feeds from nested category outlines."""
         opml_file = tmp_path / "nested.opml"
         opml_file.write_text(
             '<?xml version="1.0" encoding="UTF-8"?>\n'
@@ -62,7 +62,7 @@ class TestParseOpml:
         assert "https://c.com/feed" in urls
 
     def test_empty_opml(self, tmp_path: Path) -> None:
-        """피드가 없는 OPML 파일은 빈 리스트를 반환한다."""
+        """OPML file with no feeds returns an empty list."""
         opml_file = tmp_path / "empty.opml"
         opml_file.write_text(
             '<?xml version="1.0" encoding="UTF-8"?>\n'
@@ -76,14 +76,14 @@ class TestParseOpml:
         assert feeds == []
 
     def test_invalid_xml_raises(self, tmp_path: Path) -> None:
-        """잘못된 XML은 예외를 발생시킨다."""
+        """Invalid XML raises an exception."""
         opml_file = tmp_path / "invalid.opml"
         opml_file.write_text("this is not xml", encoding="utf-8")
         with pytest.raises(Exception):
             parse_opml(opml_file)
 
     def test_no_body_returns_empty(self, tmp_path: Path) -> None:
-        """body 요소가 없으면 빈 리스트를 반환한다."""
+        """Returns an empty list when body element is missing."""
         opml_file = tmp_path / "nobody.opml"
         opml_file.write_text(
             '<?xml version="1.0" encoding="UTF-8"?>\n'
@@ -96,7 +96,7 @@ class TestParseOpml:
         assert feeds == []
 
     def test_title_fallback_to_text(self, tmp_path: Path) -> None:
-        """title 속성이 없으면 text 속성을 이름으로 사용한다."""
+        """Falls back to text attribute when title attribute is missing."""
         opml_file = tmp_path / "text_only.opml"
         opml_file.write_text(
             '<?xml version="1.0" encoding="UTF-8"?>\n'
@@ -116,10 +116,10 @@ class TestParseOpml:
 
 
 class TestExportOpml:
-    """OPML 내보내기 테스트."""
+    """Tests for OPML export."""
 
     def test_export_creates_file(self, tmp_path: Path) -> None:
-        """피드를 OPML 파일로 내보낸다."""
+        """Exports feeds to an OPML file."""
         feeds = [
             FeedConfig(url="https://a.com/feed", name="Feed A"),
             FeedConfig(url="https://b.com/feed", name="Feed B"),
@@ -133,7 +133,7 @@ class TestExportOpml:
         assert "Feed B" in content
 
     def test_export_empty_feeds(self, tmp_path: Path) -> None:
-        """빈 피드 목록도 유효한 OPML 파일을 생성한다."""
+        """Empty feed list produces a valid OPML file."""
         output = tmp_path / "empty.opml"
         result = export_opml([], output)
         assert result.exists()
@@ -141,7 +141,7 @@ class TestExportOpml:
         assert "<body" in content
 
     def test_export_creates_parent_dirs(self, tmp_path: Path) -> None:
-        """부모 디렉토리가 없으면 자동 생성한다."""
+        """Creates parent directories automatically."""
         output = tmp_path / "sub" / "dir" / "feeds.opml"
         feeds = [FeedConfig(url="https://a.com/feed", name="Feed A")]
         result = export_opml(feeds, output)
@@ -152,10 +152,10 @@ class TestExportOpml:
 
 
 class TestOpmlRoundtrip:
-    """import → export → import 라운드트립 테스트."""
+    """Import → export → import round-trip tests."""
 
     def test_roundtrip(self, tmp_path: Path) -> None:
-        """내보낸 OPML을 다시 가져오면 동일한 피드가 복원된다."""
+        """Re-importing exported OPML restores the same feeds."""
         original = [
             FeedConfig(url="https://a.com/feed", name="Feed A"),
             FeedConfig(url="https://b.com/feed", name="Feed B"),

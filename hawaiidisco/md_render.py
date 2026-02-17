@@ -15,7 +15,7 @@ def slugify(text: str, max_len: int = 50) -> str:
 
 
 def safe_path(base_dir: Path, filename: str) -> Path:
-    """경로가 base_dir 하위인지 검증한다."""
+    """Verify that the path is under base_dir."""
     filepath = (base_dir / filename).resolve()
     if not filepath.is_relative_to(base_dir.resolve()):
         raise ValueError(f"Path traversal detected: {filename}")

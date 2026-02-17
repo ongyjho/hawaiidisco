@@ -8,7 +8,7 @@ from typing import Protocol, runtime_checkable
 class AIProvider(Protocol):
     """Interface for AI text generation providers."""
 
-    def generate(self, prompt: str, *, timeout: int = 30) -> str | None:
+    def generate(self, prompt: str, *, timeout: int = 30, max_tokens: int = 4096) -> str | None:
         """Generate text from a prompt. Return None on failure."""
         ...
 

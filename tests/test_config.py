@@ -6,7 +6,7 @@ from pathlib import Path
 import pytest
 import yaml
 
-from hawaiidisco.config import load_config, _resolve_env, remove_feed
+from hawaiidisco.config import load_config, _resolve_env, _prompt_yn, remove_feed, setup_obsidian
 from hawaiidisco.i18n import get_lang, Lang
 
 
@@ -84,20 +84,20 @@ class TestThemeConfig:
     """Tests for theme configuration."""
 
     def test_default_theme(self, config_file: Path) -> None:
-        """기본 테마는 textual-dark이다."""
+        """Default theme is textual-dark."""
         config_file.write_text("feeds: []\n", encoding="utf-8")
         config = load_config(config_file)
         assert config.theme == "textual-dark"
 
     def test_custom_theme(self, config_file: Path) -> None:
-        """커스텀 테마를 로딩할 수 있다."""
+        """Custom theme can be loaded."""
         data = {"theme": "nord", "feeds": []}
         config_file.write_text(yaml.dump(data), encoding="utf-8")
         config = load_config(config_file)
         assert config.theme == "nord"
 
     def test_theme_from_full_config(self, config_file: Path) -> None:
-        """전체 설정에서 테마를 읽을 수 있다."""
+        """Theme can be read from full config."""
         data = {
             "language": "ko",
             "theme": "dracula",
@@ -218,7 +218,7 @@ class TestRemoveFeed:
     """Tests for the remove_feed function."""
 
     def test_remove_existing_feed(self, tmp_path: Path, monkeypatch) -> None:
-        """존재하는 피드를 제거하면 True를 반환한다."""
+        """Removing an existing feed returns True."""
         config_path = tmp_path / "config.yml"
         data = {
             "feeds": [
@@ -232,14 +232,14 @@ class TestRemoveFeed:
         result = remove_feed("https://a.com/feed")
         assert result is True
 
-        # 파일에서 피드가 제거되었는지 확인
+        # Verify the feed was removed from the file
         with open(config_path, encoding="utf-8") as f:
             updated = yaml.safe_load(f)
         assert len(updated["feeds"]) == 1
         assert updated["feeds"][0]["url"] == "https://b.com/feed"
 
     def test_remove_nonexistent_feed(self, tmp_path: Path, monkeypatch) -> None:
-        """존재하지 않는 피드를 제거하면 False를 반환한다."""
+        """Removing a non-existent feed returns False."""
         config_path = tmp_path / "config.yml"
         data = {"feeds": [{"url": "https://a.com/feed", "name": "Feed A"}]}
         config_path.write_text(yaml.dump(data), encoding="utf-8")
@@ -247,3 +247,120 @@ class TestRemoveFeed:
 
         result = remove_feed("https://nonexistent.com/feed")
         assert result is False
+
+
+class TestPromptYn:
+    """Tests for the _prompt_yn helper."""
+
+    def test_default_true_empty_input(self, monkeypatch) -> None:
+        monkeypatch.setattr("builtins.input", lambda prompt="": "")
+        assert _prompt_yn("test", default=True) is True
+
+    def test_default_false_empty_input(self, monkeypatch) -> None:
+        monkeypatch.setattr("builtins.input", lambda prompt="": "")
+        assert _prompt_yn("test", default=False) is False
+
+    def test_yes_input(self, monkeypatch) -> None:
+        monkeypatch.setattr("builtins.input", lambda prompt="": "y")
+        assert _prompt_yn("test", default=False) is True
+
+    def test_no_input(self, monkeypatch) -> None:
+        monkeypatch.setattr("builtins.input", lambda prompt="": "n")
+        assert _prompt_yn("test", default=True) is False
+
+
+class TestSetupObsidian:
+    """Tests for the interactive Obsidian setup wizard."""
+
+    def test_creates_config(self, tmp_path: Path, monkeypatch) -> None:
+        """setup_obsidian writes obsidian section to config.yml."""
+        config_path = tmp_path / "config.yml"
+        config_path.write_text("language: en\nfeeds: []\n", encoding="utf-8")
+        monkeypatch.setattr("hawaiidisco.config.CONFIG_PATH", config_path)
+
+        vault = tmp_path / "my-vault"
+        vault.mkdir()
+
+        # vault_path, folder(default), auto_save(Y), insight(Y), translation(Y), tags(default)
+        inputs = iter([str(vault), "", "", "", "", ""])
+        monkeypatch.setattr("builtins.input", lambda prompt="": next(inputs))
+
+        setup_obsidian()
+
+        with open(config_path, encoding="utf-8") as f:
+            data = yaml.safe_load(f)
+
+        assert data["obsidian"]["enabled"] is True
+        assert data["obsidian"]["vault_path"] == str(vault)
+        assert data["obsidian"]["folder"] == "hawaii-disco"
+        assert data["obsidian"]["auto_save"] is True
+
+    def test_invalid_path_retries(self, tmp_path: Path, monkeypatch) -> None:
+        """setup_obsidian retries when vault path does not exist."""
+        config_path = tmp_path / "config.yml"
+        config_path.write_text("feeds: []\n", encoding="utf-8")
+        monkeypatch.setattr("hawaiidisco.config.CONFIG_PATH", config_path)
+
+        vault = tmp_path / "real-vault"
+        vault.mkdir()
+
+        # First input is invalid, second is valid
+        inputs = iter(["/nonexistent/path", str(vault), "", "", "", "", ""])
+        monkeypatch.setattr("builtins.input", lambda prompt="": next(inputs))
+
+        setup_obsidian()
+
+        with open(config_path, encoding="utf-8") as f:
+            data = yaml.safe_load(f)
+        assert data["obsidian"]["enabled"] is True
+        assert data["obsidian"]["vault_path"] == str(vault)
+
+    def test_preserves_existing_config(self, tmp_path: Path, monkeypatch) -> None:
+        """setup_obsidian preserves other config sections."""
+        config_path = tmp_path / "config.yml"
+        config_path.write_text(
+            "language: ko\nfeeds:\n- url: https://example.com\n  name: Test\n",
+            encoding="utf-8",
+        )
+        monkeypatch.setattr("hawaiidisco.config.CONFIG_PATH", config_path)
+
+        vault = tmp_path / "vault"
+        vault.mkdir()
+
+        inputs = iter([str(vault), "", "", "", "", ""])
+        monkeypatch.setattr("builtins.input", lambda prompt="": next(inputs))
+
+        setup_obsidian()
+
+        with open(config_path, encoding="utf-8") as f:
+            data = yaml.safe_load(f)
+        assert data["language"] == "ko"
+        assert len(data["feeds"]) == 1
+        assert data["obsidian"]["enabled"] is True
+
+        # restore
+        from hawaiidisco.i18n import set_lang
+        set_lang("en")
+
+    def test_custom_values(self, tmp_path: Path, monkeypatch) -> None:
+        """setup_obsidian saves custom user inputs."""
+        config_path = tmp_path / "config.yml"
+        config_path.write_text("feeds: []\n", encoding="utf-8")
+        monkeypatch.setattr("hawaiidisco.config.CONFIG_PATH", config_path)
+
+        vault = tmp_path / "vault"
+        vault.mkdir()
+
+        # vault, folder=notes, auto_save=n, insight=n, translation=y, tags=hd
+        inputs = iter([str(vault), "notes", "n", "n", "y", "hd"])
+        monkeypatch.setattr("builtins.input", lambda prompt="": next(inputs))
+
+        setup_obsidian()
+
+        with open(config_path, encoding="utf-8") as f:
+            data = yaml.safe_load(f)
+        assert data["obsidian"]["folder"] == "notes"
+        assert data["obsidian"]["auto_save"] is False
+        assert data["obsidian"]["include_insight"] is False
+        assert data["obsidian"]["include_translation"] is True
+        assert data["obsidian"]["tags_prefix"] == "hd"

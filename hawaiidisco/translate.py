@@ -17,7 +17,7 @@ from hawaiidisco.i18n import get_lang, t
 logger = logging.getLogger(__name__)
 
 
-def translate_text(text: str, provider: AIProvider, *, timeout: int = 60, lang: str = "") -> str | None:
+def translate_text(text: str, provider: AIProvider, *, timeout: int = 120, lang: str = "") -> str | None:
     """Translate text using the AI provider."""
     if not provider.is_available() or not text:
         return None
@@ -63,7 +63,7 @@ def translate_article_meta(
         if result:
             return _parse_translation(result, title)
     except Exception:
-        logger.debug("번역 실패", exc_info=True)
+        logger.debug("Translation failed", exc_info=True)
 
     return t("translation_failed_short"), ""
 
@@ -85,7 +85,7 @@ def _parse_translation(output: str, fallback_title: str) -> tuple[str, str]:
     # On parse failure, use the first line as title; fall back to original if empty
     if not translated_title:
         first_line = output.split("\n")[0].strip()
-        # 첫 줄이 키 자체이거나 비어있으면 fallback 사용
+        # Use fallback if first line is the key itself or empty
         if not first_line or first_line == title_key.strip() or first_line == title_key.rstrip(":"):
             translated_title = fallback_title
         else:

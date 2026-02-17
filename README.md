@@ -20,6 +20,7 @@ Most RSS readers stop at delivering headlines. Hawaii Disco goes further:
 - **Read an article** and instantly get an AI-generated insight on why it matters
 - **Hit `t`** and the full article is translated into your language
 - **Bookmark a few articles** and AI finds the common threads across your interests
+- **Tag and organize** your bookmarks with custom tags for easy retrieval
 - **Sync to Obsidian** — bookmarked articles auto-save as Obsidian notes with frontmatter and tags
 - **Import/export OPML** — migrate feeds from any RSS reader
 - **All in your terminal** — no browser tabs, no distractions, just you and the content
@@ -34,10 +35,12 @@ It works great as a plain RSS reader too. AI features are optional and activate 
 - **AI Insights** — One-keystroke article analysis: why it matters, what to watch out for
 - **Translation** — Translate titles, descriptions, and full article bodies
 - **Bookmark & Memo** — Save articles with personal notes, exported as Markdown
+- **Tagging** — Add custom tags to bookmarks, browse by tag
 - **Bookmark Analysis** — AI finds patterns and themes across your saved articles
 - **Obsidian Integration** — Auto-save bookmarks as Obsidian notes with YAML frontmatter and tags
 - **OPML Import/Export** — Migrate feeds to and from other RSS readers
 - **Multiple AI Providers** — Claude CLI, Anthropic API, OpenAI API (or none at all)
+- **Theme Selection** — Switch between Textual themes
 - **6 Languages** — English, Korean, Japanese, Chinese (Simplified), Spanish, German
 
 ---
@@ -101,6 +104,9 @@ Edit `~/.config/hawaiidisco/config.yml`:
 # Language: en | ko | ja | zh_CN | es | de
 language: en
 
+# Theme (any Textual built-in theme)
+theme: textual-dark
+
 # AI provider configuration
 ai:
   provider: claude_cli   # claude_cli | anthropic | openai
@@ -129,11 +135,12 @@ bookmark_dir: ~/.local/share/hawaiidisco/bookmarks
 obsidian:
   enabled: false
   vault_path: ~/Documents/MyVault
-  folder: hawaii-disco     # Subfolder inside the vault
-  template: default        # default | minimal
-  auto_save: true          # Auto-save on bookmark
-  include_insight: true
-  include_translation: true
+  folder: hawaii-disco       # Subfolder inside the vault
+  template: default          # default | minimal
+  auto_save: true            # Auto-save on bookmark
+  include_insight: true      # Include AI insight in notes
+  include_translation: true  # Include translations in notes
+  tags_prefix: hawaiidisco   # Tag prefix for hierarchical tags
 ```
 
 ### AI Providers
@@ -185,13 +192,16 @@ Shift+E   Export current feeds to OPML
 | `t` | Translate title & description |
 | `b` | Toggle bookmark |
 | `m` | Add memo to bookmark |
+| `c` | Edit tags |
 | `r` | Refresh feeds |
 | `/` | Search |
 | `f` | Filter bookmarks only |
 | `a` | Add feed |
 | `l` | Bookmark list |
 | `L` | Feed list |
+| `T` | Tag list |
 | `S` | Save to Obsidian |
+| `V` | Select theme |
 | `I` | Import OPML |
 | `E` | Export OPML |
 | `q` | Quit |
@@ -207,6 +217,126 @@ Shift+E   Export current feeds to OPML
 | `i` | Generate insight |
 | `o` | Open in browser |
 | `q` / `Escape` | Close |
+
+---
+
+## Obsidian Integration
+
+Hawaii Disco can automatically save bookmarked articles as Obsidian-compatible Markdown notes in your vault. Each note includes YAML frontmatter, AI insights, translations, and your personal memos.
+
+### Setup
+
+1. Enable in `config.yml`:
+
+```yaml
+obsidian:
+  enabled: true
+  vault_path: ~/Documents/MyVault   # Your Obsidian vault path
+  folder: hawaii-disco               # Subfolder for saved articles
+  tags_prefix: hawaiidisco           # Prefix for hierarchical tags
+```
+
+2. Press `S` on any bookmarked article to save it to your vault, or set `auto_save: true` to save automatically on bookmark.
+
+### Note Format
+
+Notes are saved to `vault_path/folder/feed_name/YYYY-MM-DD_slug.md` with this structure:
+
+```markdown
+---
+title: "Article Title"
+source: https://example.com/article
+feed: HackerNews
+date: 2025-01-15
+tags:
+  - hawaiidisco
+  - hawaiidisco/hackernews
+  - hawaiidisco/your-custom-tag
+created_by: hawaiidisco
+---
+
+# Article Title
+
+## Summary
+Article description...
+
+## AI Insight
+AI-generated insight about the article...
+
+## Translation
+Translated content (if available)...
+
+## My Notes
+Your personal memo...
+
+---
+*Saved from Hawaii Disco on 2025-01-15*
+*Original: [Article Title](https://example.com/article)*
+```
+
+### Features
+
+- **Smart merging** — Updating a note preserves your existing "My Notes" section
+- **Conditional sections** — AI Insight and Translation sections only appear when content is available
+- **Hierarchical tags** — Tags follow `prefix/category` format for easy filtering in Obsidian
+- **Custom tags** — Tags you add to bookmarks (`c` key) are included in the note's frontmatter
+
+### Tips
+
+- Use Obsidian's **tag pane** or **Dataview plugin** to browse articles by feed, date, or custom tags
+- Set `include_insight: false` or `include_translation: false` to keep notes minimal
+- The `minimal` template option creates shorter notes without section headers
+
+---
+
+## Notion Integration
+
+Hawaii Disco doesn't have a direct Notion API integration, but you can easily sync your bookmarked articles to Notion through two approaches:
+
+### Option 1: Via Obsidian (Recommended)
+
+Use Hawaii Disco's Obsidian integration together with a Notion sync tool:
+
+1. Enable Obsidian integration in Hawaii Disco (see above)
+2. Install the [Notion to Obsidian](https://github.com/NotionX/notion-to-obsidian) converter or use [Obsidian Web Clipper](https://obsidian.md/clipper) in reverse — or use a sync tool like **[makemd](https://www.makemd.com/)** that bridges Obsidian and Notion
+3. Your Hawaii Disco bookmarks flow: **Hawaii Disco → Obsidian vault → Notion**
+
+### Option 2: Via Bookmark Markdown Files
+
+Hawaii Disco exports all bookmarks as Markdown files. You can import these into Notion:
+
+1. Bookmarks are saved to `~/.local/share/hawaiidisco/bookmarks/` as `.md` files
+2. In Notion, use **Import → Markdown** to bring in your bookmark files
+3. For automation, use tools like [md2notion](https://github.com/Cobertos/md2notion) or the Notion API to programmatically sync the bookmark directory
+
+### Option 3: Notion API Script
+
+For advanced users, write a script that reads Hawaii Disco's SQLite database directly:
+
+```python
+# Example: read bookmarks from Hawaii Disco's database
+import sqlite3
+from pathlib import Path
+
+db_path = Path("~/.local/share/hawaiidisco/hawaiidisco.db").expanduser()
+conn = sqlite3.connect(db_path)
+
+bookmarks = conn.execute("""
+    SELECT a.title, a.link, a.description, a.insight, a.feed_name,
+           b.memo, b.tags, b.bookmarked_at
+    FROM bookmarks b
+    JOIN articles a ON a.id = b.article_id
+    ORDER BY b.bookmarked_at DESC
+""").fetchall()
+
+# Then use the Notion SDK to create pages:
+# pip install notion-client
+# from notion_client import Client
+# notion = Client(auth="your-integration-token")
+# ... create pages in your Notion database
+```
+
+This gives you full control over what data flows into Notion, including AI insights, translations, and custom tags.
 
 ---
 
@@ -327,8 +457,11 @@ See [`hawaiidisco/i18n/CONTRIBUTING.md`](hawaiidisco/i18n/CONTRIBUTING.md) for t
 - [x] Demo screenshot / GIF
 - [x] Obsidian vault integration
 - [x] 6 languages (EN/KO/JA/ZH-CN/ES/DE)
+- [x] Article tagging system
+- [x] Theme selection
 - [ ] Plugin system
 - [ ] Additional AI providers (Gemini, Ollama, etc.)
+- [ ] Notion direct integration
 - [ ] Theme customization
 
 ---
@@ -340,6 +473,7 @@ See [`hawaiidisco/i18n/CONTRIBUTING.md`](hawaiidisco/i18n/CONTRIBUTING.md) for t
 | Config | `~/.config/hawaiidisco/config.yml` |
 | Database | `~/.local/share/hawaiidisco/hawaiidisco.db` |
 | Bookmarks | `~/.local/share/hawaiidisco/bookmarks/` |
+| Obsidian notes | `<vault_path>/<folder>/` |
 
 ---
 

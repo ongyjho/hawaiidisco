@@ -34,6 +34,7 @@ class AIConfig:
 class InsightConfig:
     enabled: bool = True
     mode: str = "manual"  # auto | manual
+    persona: str = ""
 
 
 @dataclass
@@ -80,6 +81,15 @@ def _resolve_env(value: str) -> str:
     return value
 
 
+def _prompt_yn(prompt: str, *, default: bool = True) -> bool:
+    """Prompt for yes/no with a default. Returns bool."""
+    suffix = " [Y/n]: " if default else " [y/N]: "
+    answer = input(prompt + suffix).strip().lower()
+    if not answer:
+        return default
+    return answer in ("y", "yes")
+
+
 def _ensure_config() -> None:
     """Copy seed config to user config path if it does not exist."""
     if CONFIG_PATH.exists():
@@ -120,6 +130,7 @@ def load_config(path: Path | None = None) -> Config:
     insight = InsightConfig(
         enabled=insight_raw.get("enabled", True),
         mode=insight_raw.get("mode", "manual"),
+        persona=insight_raw.get("persona", ""),
     )
 
     bookmark_dir = Path(
@@ -210,11 +221,99 @@ def remove_feed(feed_url: str) -> bool:
 
 
 def ensure_dirs(config: Config) -> None:
-    """Create required directories if they do not exist. 소유자만 접근 가능하도록 권한 설정."""
+    """Create required directories if they do not exist. Permissions set to owner-only access."""
     dirs: list[Path] = [config.db_path.parent, config.bookmark_dir]
     if config.obsidian.enabled and config.obsidian.vault_path != Path(""):
         dirs.append(config.obsidian.vault_path / config.obsidian.folder)
     for d in dirs:
         d.mkdir(parents=True, exist_ok=True, mode=0o700)
-        # 기존 디렉토리도 권한 보정
+        # Fix permissions on pre-existing directories
         d.chmod(0o700)
+
+
+def setup_obsidian() -> None:
+    """Interactive CLI wizard to configure Obsidian integration."""
+    from hawaiidisco.i18n import set_lang, t
+
+    _ensure_config()
+
+    # Load existing config to detect language for i18n
+    raw: dict = {}
+    if CONFIG_PATH.exists():
+        with open(CONFIG_PATH, encoding="utf-8") as f:
+            raw = yaml.safe_load(f) or {}
+    set_lang(raw.get("language", "en"))
+
+    try:
+        _setup_obsidian_interactive(raw)
+    except (KeyboardInterrupt, EOFError):
+        print()
+        print(t("setup_obsidian_cancelled"))
+
+
+def _setup_obsidian_interactive(raw: dict) -> None:
+    """Run the interactive Obsidian setup prompts and save to config."""
+    from hawaiidisco.i18n import t
+
+    print()
+    print(t("setup_obsidian_title"))
+    print()
+
+    existing_obs = raw.get("obsidian", {})
+
+    # 1. Vault path (required, validated)
+    default_vault = existing_obs.get("vault_path", "")
+    while True:
+        prompt = t("setup_obsidian_vault_path")
+        if default_vault:
+            prompt += f" [{default_vault}]"
+        prompt += ": "
+        vault_input = input(prompt).strip() or default_vault
+        if not vault_input:
+            print(t("setup_obsidian_vault_required"))
+            continue
+        vault_expanded = Path(os.path.expanduser(vault_input))
+        if not vault_expanded.is_dir():
+            print(t("setup_obsidian_vault_not_found", path=str(vault_expanded)))
+            continue
+        break
+
+    # 2. Folder inside vault
+    default_folder = existing_obs.get("folder", "hawaii-disco")
+    folder = input(t("setup_obsidian_folder") + f" [{default_folder}]: ").strip() or default_folder
+
+    # 3. Auto-save on bookmark
+    auto_save = _prompt_yn(t("setup_obsidian_auto_save"), default=existing_obs.get("auto_save", True))
+
+    # 4. Include AI insight
+    include_insight = _prompt_yn(
+        t("setup_obsidian_include_insight"), default=existing_obs.get("include_insight", True)
+    )
+
+    # 5. Include translation
+    include_translation = _prompt_yn(
+        t("setup_obsidian_include_translation"), default=existing_obs.get("include_translation", True)
+    )
+
+    # 6. Tags prefix
+    default_tags = existing_obs.get("tags_prefix", "hawaiidisco")
+    tags_prefix = input(t("setup_obsidian_tags_prefix") + f" [{default_tags}]: ").strip() or default_tags
+
+    # Write to config.yml (same pattern as add_feed / remove_feed)
+    raw["obsidian"] = {
+        "enabled": True,
+        "vault_path": vault_input,
+        "folder": folder,
+        "template": existing_obs.get("template", "default"),
+        "auto_save": auto_save,
+        "include_insight": include_insight,
+        "include_translation": include_translation,
+        "tags_prefix": tags_prefix,
+    }
+
+    CONFIG_PATH.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+    with open(CONFIG_PATH, "w", encoding="utf-8") as f:
+        yaml.dump(raw, f, allow_unicode=True, default_flow_style=False, sort_keys=False)
+
+    print()
+    print(t("setup_obsidian_complete", path=str(CONFIG_PATH)))
