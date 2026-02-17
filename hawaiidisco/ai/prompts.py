@@ -23,7 +23,11 @@ def get_lang_name(lang: str) -> str:
 # Insight prompt (default, generic — used when persona is not set)
 INSIGHT_PROMPT: str = (
     "You are an intelligent reader analyzing an article. "
-    "Based on the title and description below, provide a sharp, opinionated insight in 1-2 sentences. "
+    "First, identify the article's domain (technology, politics, business, economics, science, culture, sports, etc.). "
+    "Then provide a sharp, opinionated insight in 1-2 sentences from the appropriate perspective for that domain. "
+    "For example, analyze political articles from a political/policy perspective, "
+    "business articles from a market/strategy perspective, and so on. "
+    "Do NOT analyze non-tech articles from a technical perspective. "
     "Focus on WHY this matters: its practical impact, hidden implications, or what readers should watch out for. "
     "Do NOT simply restate the title or summarize. Instead, add your own analytical perspective. "
     "Keep technical terms as-is. "
@@ -38,11 +42,15 @@ INSIGHT_PROMPT: str = (
 INSIGHT_PROMPT_PERSONA: str = (
     "You are an intelligent reader providing personalized insights.\n\n"
     "<reader_profile>\n{persona}\n</reader_profile>\n\n"
-    "Based on the reader's background, analyze the article below and provide a sharp, "
-    "relevant insight in 1-2 sentences. Focus on what specifically matters to THIS reader: "
-    "practical implications for their role, opportunities they should notice, risks to watch out for, "
-    "or connections to their domain.\n"
-    "Do NOT simply restate the title or summarize. Add analytical perspective tailored to the reader's context. "
+    "First, identify the article's domain (technology, politics, business, economics, science, culture, sports, etc.). "
+    "Then analyze the article from the appropriate perspective for that domain.\n"
+    "If the article is within the reader's primary domain, provide a sharp insight tailored to their role. "
+    "If the article is outside the reader's primary domain (e.g., a political article for a tech reader), "
+    "analyze it from the article's own domain perspective first, "
+    "then briefly note any relevance to the reader's context if applicable.\n"
+    "Do NOT force a technical analysis on non-tech articles. "
+    "Provide a sharp, relevant insight in 1-2 sentences. "
+    "Do NOT simply restate the title or summarize. Add analytical perspective. "
     "Keep technical terms as-is. "
     "Respond in {output_language}.\n\n"
     "<article>\n"
@@ -107,13 +115,14 @@ BOOKMARK_ANALYSIS_ITEM: str = (
 
 # 다이제스트 프롬프트
 DIGEST_PROMPT: str = (
-    "You are a senior tech editor creating a weekly digest of notable articles.\n"
+    "You are a senior editor creating a weekly digest of notable articles.\n"
     "Below are the articles from the past {period_days} days.\n\n"
     "<articles>\n{articles}\n</articles>\n\n"
     "Please create a concise, well-structured digest in {output_language}:\n"
     "1. **Key Themes**: Identify 2-4 major themes or trends across these articles\n"
     "2. **Top Highlights**: Summarize the 3-5 most important articles with why they matter\n"
-    "3. **What to Watch**: Briefly note emerging topics or implications for engineers\n\n"
+    "3. **What to Watch**: Briefly note emerging topics or implications worth noting\n\n"
+    "Analyze each article from its own domain perspective (tech, politics, business, etc.). "
     "Keep the digest focused and actionable. Use markdown formatting."
 )
 

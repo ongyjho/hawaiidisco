@@ -83,7 +83,7 @@ class TestGenerateInsightPersona:
         prompt_arg = provider.generate.call_args[0][0]
         assert "reader_profile" in prompt_arg
         assert "3년차 백엔드 개발자" in prompt_arg
-        assert "tailored to the reader's context" in prompt_arg
+        assert "relevance to the reader's context" in prompt_arg
 
     def test_persona_includes_article_info(self) -> None:
         """Persona prompt also includes article info."""
@@ -133,6 +133,81 @@ class TestGetOrGenerateInsightPersona:
         result = get_or_generate_insight(article, db, provider, persona="any persona")
         assert result == "Cached insight"
         provider.generate.assert_not_called()
+
+
+class TestDomainAwareInsight:
+    """Tests that insight prompts include domain-aware analysis instructions."""
+
+    def test_default_prompt_includes_domain_detection(self) -> None:
+        """Default prompt instructs AI to identify article domain."""
+        article = _make_article(
+            title="Presidential Election Results",
+            description="The opposition party won a landslide victory.",
+        )
+        provider = _make_provider()
+
+        generate_insight(article, provider, lang="en")
+
+        prompt_arg = provider.generate.call_args[0][0]
+        assert "identify the article's domain" in prompt_arg
+        assert "politics" in prompt_arg
+
+    def test_default_prompt_forbids_tech_analysis_on_nontech(self) -> None:
+        """Default prompt explicitly forbids tech analysis on non-tech articles."""
+        article = _make_article()
+        provider = _make_provider()
+
+        generate_insight(article, provider, lang="en")
+
+        prompt_arg = provider.generate.call_args[0][0]
+        assert "Do NOT analyze non-tech articles from a technical perspective" in prompt_arg
+
+    def test_default_prompt_includes_domain_examples(self) -> None:
+        """Default prompt includes domain-specific analysis examples."""
+        article = _make_article()
+        provider = _make_provider()
+
+        generate_insight(article, provider, lang="en")
+
+        prompt_arg = provider.generate.call_args[0][0]
+        assert "political/policy perspective" in prompt_arg
+        assert "market/strategy perspective" in prompt_arg
+
+    def test_persona_prompt_includes_domain_detection(self) -> None:
+        """Persona prompt also instructs AI to identify article domain."""
+        article = _make_article(
+            title="New Trade Tariffs Announced",
+            description="Government imposes 25% tariffs on imports.",
+        )
+        provider = _make_provider()
+
+        generate_insight(article, provider, lang="en", persona="Backend developer")
+
+        prompt_arg = provider.generate.call_args[0][0]
+        assert "identify the article's domain" in prompt_arg
+        assert "Do NOT force a technical analysis on non-tech articles" in prompt_arg
+
+    def test_persona_prompt_handles_cross_domain(self) -> None:
+        """Persona prompt instructs to analyze from article's domain when outside reader's domain."""
+        article = _make_article()
+        provider = _make_provider()
+
+        generate_insight(article, provider, lang="en", persona="Frontend developer")
+
+        prompt_arg = provider.generate.call_args[0][0]
+        assert "outside the reader's primary domain" in prompt_arg
+        assert "article's own domain perspective first" in prompt_arg
+
+    def test_persona_prompt_tailors_within_domain(self) -> None:
+        """Persona prompt tailors insight when article is within reader's domain."""
+        article = _make_article()
+        provider = _make_provider()
+
+        generate_insight(article, provider, lang="en", persona="ML engineer")
+
+        prompt_arg = provider.generate.call_args[0][0]
+        assert "within the reader's primary domain" in prompt_arg
+        assert "tailored to their role" in prompt_arg
 
 
 class TestInsightConfigPersona:
