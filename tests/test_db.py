@@ -267,6 +267,67 @@ class TestFeedNameFilter:
         assert results[0].id == "f-7"
 
 
+class TestUnreadFilter:
+    """Tests for get_articles unread_only filter."""
+
+    def test_unread_only_returns_unread(self, db: Database) -> None:
+        """unread_only=True는 읽지 않은 글만 반환한다."""
+        db.upsert_article("u-1", "Feed A", "Unread Article", "https://a.com/1", None, None)
+        db.upsert_article("u-2", "Feed A", "Read Article", "https://a.com/2", None, None)
+        db.mark_read("u-2")
+        results = db.get_articles(unread_only=True)
+        assert len(results) == 1
+        assert results[0].id == "u-1"
+        assert not results[0].is_read
+
+    def test_unread_only_false_returns_all(self, db: Database) -> None:
+        """unread_only=False(기본값)는 모든 글을 반환한다."""
+        db.upsert_article("u-3", "Feed A", "Article 1", "https://a.com/1", None, None)
+        db.upsert_article("u-4", "Feed A", "Article 2", "https://a.com/2", None, None)
+        db.mark_read("u-4")
+        results = db.get_articles(unread_only=False)
+        assert len(results) == 2
+
+    def test_unread_with_feed_filter(self, db: Database) -> None:
+        """unread_only와 feed_name 필터를 조합할 수 있다."""
+        db.upsert_article("u-5", "Feed A", "A Unread", "https://a.com/1", None, None)
+        db.upsert_article("u-6", "Feed A", "A Read", "https://a.com/2", None, None)
+        db.upsert_article("u-7", "Feed B", "B Unread", "https://b.com/1", None, None)
+        db.mark_read("u-6")
+        results = db.get_articles(feed_name="Feed A", unread_only=True)
+        assert len(results) == 1
+        assert results[0].id == "u-5"
+
+    def test_unread_with_search(self, db: Database) -> None:
+        """unread_only와 search를 조합할 수 있다."""
+        db.upsert_article("u-8", "Feed A", "Python Tips", "https://a.com/1", None, None)
+        db.upsert_article("u-9", "Feed A", "Python Guide", "https://a.com/2", None, None)
+        db.upsert_article("u-10", "Feed A", "Rust Guide", "https://a.com/3", None, None)
+        db.mark_read("u-9")
+        results = db.get_articles(search="Python", unread_only=True)
+        assert len(results) == 1
+        assert results[0].id == "u-8"
+
+    def test_unread_with_bookmarked(self, db: Database) -> None:
+        """unread_only와 bookmarked_only를 조합할 수 있다."""
+        db.upsert_article("u-11", "Feed A", "BM Unread", "https://a.com/1", None, None)
+        db.upsert_article("u-12", "Feed A", "BM Read", "https://a.com/2", None, None)
+        db.upsert_article("u-13", "Feed A", "Not BM", "https://a.com/3", None, None)
+        db.toggle_bookmark("u-11")
+        db.toggle_bookmark("u-12")
+        db.mark_read("u-12")
+        results = db.get_articles(bookmarked_only=True, unread_only=True)
+        assert len(results) == 1
+        assert results[0].id == "u-11"
+
+    def test_all_read_returns_empty(self, db: Database) -> None:
+        """모든 글이 읽힌 상태에서 unread_only=True는 빈 리스트를 반환한다."""
+        db.upsert_article("u-14", "Feed A", "Article", "https://a.com/1", None, None)
+        db.mark_read("u-14")
+        results = db.get_articles(unread_only=True)
+        assert results == []
+
+
 class TestGetAllBookmarkMemos:
     """Tests for retrieving all bookmark memos."""
 

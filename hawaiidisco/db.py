@@ -78,7 +78,7 @@ class Database:
         return conn
 
     def _migrate(self, conn: sqlite3.Connection) -> None:
-        """Add new columns to existing tables if missing."""
+        """Add new columns and indexes to existing tables if missing."""
         cursor = conn.execute("PRAGMA table_info(articles)")
         columns = {row[1] for row in cursor.fetchall()}
         if "translated_title" not in columns:
@@ -87,6 +87,19 @@ class Database:
             conn.execute("ALTER TABLE articles ADD COLUMN translated_desc TEXT")
         if "translated_body" not in columns:
             conn.execute("ALTER TABLE articles ADD COLUMN translated_body TEXT")
+        # Performance indexes for common query patterns
+        conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_articles_published "
+            "ON articles(published_at DESC, fetched_at DESC)"
+        )
+        conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_articles_feed "
+            "ON articles(feed_name, published_at DESC)"
+        )
+        conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_articles_read "
+            "ON articles(is_read, published_at DESC)"
+        )
 
     def close(self) -> None:
         conn = getattr(self._local, "conn", None)
@@ -120,6 +133,7 @@ class Database:
         bookmarked_only: bool = False,
         search: str | None = None,
         feed_name: str | None = None,
+        unread_only: bool = False,
         limit: int = 200,
     ) -> list[Article]:
         """Return a list of articles ordered by most recent first."""
@@ -127,6 +141,8 @@ class Database:
         params: list = []
         if bookmarked_only:
             query += " AND is_bookmarked = 1"
+        if unread_only:
+            query += " AND is_read = 0"
         if feed_name:
             query += " AND feed_name = ?"
             params.append(feed_name)
