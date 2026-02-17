@@ -10,7 +10,10 @@ from pathlib import Path
 from textual import work
 from textual.app import App, ComposeResult
 from textual.binding import Binding
+from textual.containers import Vertical, VerticalScroll
 from textual.css.query import NoMatches
+from textual.screen import ModalScreen
+from textual.widgets import Input, ListItem, ListView, Static, TabbedContent, TabPane, TextArea
 
 from hawaiidisco.ai import get_provider
 from hawaiidisco.config import Config, FeedConfig, load_config, ensure_dirs, add_feed, remove_feed
@@ -24,6 +27,7 @@ from hawaiidisco.bookmark import save_bookmark_md, delete_bookmark_md
 from hawaiidisco.obsidian import save_obsidian_note, save_digest_note, delete_obsidian_note, validate_vault_path
 from hawaiidisco.digest import get_or_generate_digest
 from hawaiidisco.translate import translate_article_meta, translate_text
+from hawaiidisco.screens.digest import DigestScreen
 from hawaiidisco.widgets.timeline import Timeline
 from hawaiidisco.widgets.detail import DetailView
 from hawaiidisco.widgets.status import StatusBar
