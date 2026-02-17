@@ -958,7 +958,10 @@ class HawaiiDiscoApp(App):
 
     def on_timeline_article_highlighted(self, event: Timeline.ArticleHighlighted) -> None:
         self._current_article = event.article
-        self.query_one(DetailView).show_article(event.article)
+        try:
+            self.query_one(DetailView).show_article(event.article)
+        except NoMatches:
+            pass
 
     def on_timeline_article_selected(self, event: Timeline.ArticleSelected) -> None:
         self._read_article(event.article)
@@ -1078,7 +1081,11 @@ class HawaiiDiscoApp(App):
             # Refresh detail view on main screen
             updated = self.db.get_article(article_id)
             if updated:
-                self.call_from_thread(self.query_one(DetailView).show_article, updated)
+                try:
+                    detail = self.query_one(DetailView)
+                    self.call_from_thread(detail.show_article, updated)
+                except NoMatches:
+                    pass
         else:
             self.call_from_thread(screen.update_insight, t("insight_failed"))
 
@@ -1426,7 +1433,11 @@ class HawaiiDiscoApp(App):
 
         updated = self.db.get_article(article.id)
         if updated:
-            self.call_from_thread(self.query_one(DetailView).show_article, updated)
+            try:
+                detail = self.query_one(DetailView)
+                self.call_from_thread(detail.show_article, updated)
+            except NoMatches:
+                pass
 
     @work(thread=True)
     def _translate_article_body(self, screen: ArticleScreen) -> None:
