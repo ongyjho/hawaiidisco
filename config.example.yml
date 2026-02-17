@@ -24,6 +24,15 @@ refresh_interval: 30
 insight:
   enabled: true
   mode: manual  # auto | manual
+  # Describe yourself freely — AI generates insights tailored to your perspective.
+  # Write in English for best results. Output language follows the 'language' setting.
+  # Leave empty for generic insights.
+  # Examples:
+  #   persona: "Senior backend engineer at a startup, working with Go and Kubernetes"
+  #   persona: "Non-technical PM interested in the business impact of tech trends"
+  #   persona: "UX designer interested in AI-powered product experiences"
+  #   persona: "College student preparing for a career in AI/ML"
+  persona: ""
 
 # Bookmark markdown save path
 bookmark_dir: ~/.local/share/hawaiidisco/bookmarks

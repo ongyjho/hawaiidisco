@@ -34,6 +34,7 @@ class AIConfig:
 class InsightConfig:
     enabled: bool = True
     mode: str = "manual"  # auto | manual
+    persona: str = ""
 
 
 @dataclass
@@ -110,6 +111,7 @@ def load_config(path: Path | None = None) -> Config:
     insight = InsightConfig(
         enabled=insight_raw.get("enabled", True),
         mode=insight_raw.get("mode", "manual"),
+        persona=insight_raw.get("persona", ""),
     )
 
     bookmark_dir = Path(

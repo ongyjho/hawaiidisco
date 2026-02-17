@@ -1091,7 +1091,9 @@ class HawaiiDiscoApp(App):
             article = None
 
         if article:
-            insight = get_or_generate_insight(article, self.db, self.ai)
+            insight = get_or_generate_insight(
+                article, self.db, self.ai, persona=self.config.insight.persona
+            )
             self.call_from_thread(screen.update_insight, insight)
             self.call_from_thread(self._reload_articles)
 
@@ -1318,6 +1320,7 @@ class HawaiiDiscoApp(App):
 
         from hawaiidisco.ai.prompts import (
             BOOKMARK_ANALYSIS_PROMPT,
+            BOOKMARK_ANALYSIS_PROMPT_PERSONA,
             BOOKMARK_ANALYSIS_ITEM,
             NONE_TEXT,
             get_lang_name,
@@ -1325,6 +1328,7 @@ class HawaiiDiscoApp(App):
         from hawaiidisco.i18n import get_lang
 
         lang = get_lang().value
+        persona = self.config.insight.persona
 
         bookmarks_text = "\n".join(
             BOOKMARK_ANALYSIS_ITEM.format(
@@ -1335,10 +1339,14 @@ class HawaiiDiscoApp(App):
             for a in articles
         )
 
-        prompt = BOOKMARK_ANALYSIS_PROMPT.format(
-            output_language=get_lang_name(lang),
-            bookmarks=bookmarks_text,
-        )
+        template = BOOKMARK_ANALYSIS_PROMPT_PERSONA if persona else BOOKMARK_ANALYSIS_PROMPT
+        fmt_kwargs: dict[str, str] = {
+            "output_language": get_lang_name(lang),
+            "bookmarks": bookmarks_text,
+        }
+        if persona:
+            fmt_kwargs["persona"] = persona
+        prompt = template.format(**fmt_kwargs)
 
         result = self.ai.generate(prompt, timeout=60)
         try:
