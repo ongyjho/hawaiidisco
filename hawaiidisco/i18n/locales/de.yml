@@ -1,0 +1,150 @@
+meta:
+  language: "Deutsch"
+  code: de
+  contributors:
+    - name: Hawaii Disco Team
+
+# --- app.py: MemoScreen ---
+cancel: "Abbrechen"
+memo_input_help: "Notiz eingeben (Ctrl+S speichern, Escape abbrechen)"
+close: "Schlie\u00dfen"
+
+# --- app.py: ArticleScreen ---
+browser: "Browser"
+translate: "\u00dcbersetzen"
+original: "Original"
+loading_body: "Artikel wird geladen..."
+translation_tab: "\u00dcbersetzung"
+press_t_to_translate: "t dr\u00fccken zum \u00dcbersetzen"
+translating: "\u00dcbersetze..."
+insight_tab: "Analyse"
+press_i_for_insight: "i dr\u00fccken f\u00fcr Analyse"
+
+# --- app.py: AddFeedScreen ---
+add_feed_help: "Feed hinzuf\u00fcgen (Enter weiter/best\u00e4tigen, Escape abbrechen)"
+rss_url_placeholder: "RSS URL (z.B. https://example.com/feed.xml)"
+feed_name_placeholder: "Feed-Name (z.B. GeekNews)"
+invalid_url_scheme: "URL muss mit http:// oder https:// beginnen"
+
+# --- app.py: SearchScreen ---
+search_help: "Suchbegriff eingeben (Enter best\u00e4tigen, Escape abbrechen)"
+search_placeholder: "Artikel suchen..."
+
+# --- app.py: HawaiiDiscoApp status messages ---
+refreshing: "Aktualisiere..."
+new_articles_found: "{count} neue(r) Artikel"
+no_new_articles: "Keine neuen Artikel"
+claude_cli_not_found: "Claude CLI nicht gefunden"
+generating_insight: "Analyse wird erstellt..."
+bookmark_added: "\u2605 Gespeichert: {title}"
+bookmark_removed: "Lesezeichen entfernt: {title}"
+bookmark_first: "Bitte zuerst als Lesezeichen speichern"
+memo_saved: "Notiz gespeichert"
+searching: "Suche: {query}"
+search_no_results: "Keine Ergebnisse f\u00fcr '{query}' (Escape zum L\u00f6schen)"
+search_cleared: "Suche gel\u00f6scht"
+bookmarks_only: "\u2605 Nur Lesezeichen"
+feed_added: "Feed hinzugef\u00fcgt: {name}"
+already_translated: "Bereits \u00fcbersetzt (im Detailpanel pr\u00fcfen)"
+translated_preview: "\u00dcbersetzt: {title}"
+translation_failed: "\u00dcbersetzung fehlgeschlagen. Bitte erneut versuchen."
+
+# --- OPML ---
+opml_import_help: "OPML-Dateipfad eingeben (Enter best\u00e4tigen, Escape abbrechen)"
+opml_path_placeholder: "Pfad zur .opml-Datei"
+opml_import_success: "{count} Feed(s) aus OPML importiert"
+opml_import_empty: "Keine Feeds in der OPML-Datei gefunden"
+opml_import_error: "OPML-Import fehlgeschlagen: {error}"
+opml_export_success: "Feeds nach {path} exportiert"
+opml_export_error: "OPML-Export fehlgeschlagen: {error}"
+opml_no_feeds: "Keine Feeds zum Exportieren"
+opml_import: "OPML importieren"
+opml_export: "OPML exportieren"
+
+# --- Feed delete ---
+confirm_delete_feed: "Feed '{name}' l\u00f6schen? ({count} Artikel werden entfernt)"
+confirm_delete_hint: "y: best\u00e4tigen / n oder Esc: abbrechen"
+feed_deleted: "Feed gel\u00f6scht: {name} ({count} Artikel entfernt)"
+
+# --- Feed filter ---
+feed_filter_active: "Feed: {name}"
+feed_filter_cleared: "Feed-Filter gel\u00f6scht"
+
+# --- FeedListScreen / BookmarkListScreen ---
+feed_list_title: "Abonnierte Feeds"
+no_feeds: "Keine Feeds konfiguriert. 'a' dr\u00fccken zum Hinzuf\u00fcgen."
+article_count: "{count} Artikel"
+feeds: "Feed-Liste"
+bookmark_list_title: "Gespeicherte Artikel"
+no_bookmarks: "Keine gespeicherten Artikel."
+bookmarks_label: "Lesezeichen"
+
+# --- BookmarkListScreen: AI analysis ---
+bookmark_analysis_title: "Lesezeichen-Analyse (Letzte 7 Tage)"
+generating_bookmark_analysis: "Lesezeichen-Analyse wird erstellt..."
+bookmark_analysis_complete: "Lesezeichen-Analyse abgeschlossen"
+bookmark_analysis_failed: "Lesezeichen-Analyse fehlgeschlagen"
+no_recent_bookmarks: "Keine Lesezeichen in den letzten 7 Tagen."
+bookmark_articles_section: "Gespeicherte Artikel"
+
+# --- widgets/status.py ---
+nav_move: "\u2191\u2193 Bewegen"
+read: "Lesen"
+insight: "Analyse"
+bookmark: "Speichern"
+refresh: "Aktualisieren"
+search: "Suchen"
+filter: "Filtern"
+add_feed: "Feed hinzuf\u00fcgen"
+quit: "Beenden"
+last_refresh: "Letzte Aktualisierung: {time}"
+
+# --- widgets/detail.py ---
+select_article: "Artikel ausw\u00e4hlen"
+
+# --- widgets/timeline.py ---
+just_now: "gerade eben"
+minutes_ago: "vor {n}Min"
+hours_ago: "vor {n}Std"
+days_ago: "vor {n}T"
+
+# --- reader.py ---
+fetch_error: "Seite konnte nicht geladen werden ({error})"
+extract_error: "Inhalt konnte nicht extrahiert werden."
+truncated: "... (gek\u00fcrzt)"
+
+# --- fetcher.py ---
+no_title: "(Ohne Titel)"
+
+# --- bookmark.py ---
+bm_source: "Quelle"
+bm_date: "Datum"
+bm_link: "Link"
+bm_insight: "Analyse"
+bm_memo_section: "## Notiz"
+bm_no_memo: "(Keine Notiz)"
+
+# --- insight.py ---
+insight_failed: "Analyse-Erstellung fehlgeschlagen"
+
+# --- translate.py ---
+translation_failed_short: "\u00dcbersetzung fehlgeschlagen"
+
+# --- Tag ---
+tag_edit_help: "Tags durch Komma getrennt eingeben (Enter speichern, Escape abbrechen)"
+tag_placeholder: "z.B. tech, python, ai"
+tag_saved: "Tags gespeichert"
+tag_list_title: "Tags"
+no_tags: "Keine Tags. 'c' auf einem gespeicherten Artikel dr\u00fccken zum Hinzuf\u00fcgen."
+tag_count: "{count} Artikel"
+tag_filter_active: "Tag: {tag}"
+tag_filter_cleared: "Tag-Filter gel\u00f6scht"
+bookmark_first_for_tag: "Artikel zuerst speichern, um Tags hinzuzuf\u00fcgen"
+tags_label: "Tags"
+
+# --- Theme ---
+theme_list_title: "Design ausw\u00e4hlen"
+theme_applied: "Design: {name}"
+theme_dark: "dunkel"
+theme_light: "hell"
+theme_label: "Design"

@@ -1,0 +1,150 @@
+meta:
+  language: "简体中文"
+  code: zh-CN
+  contributors:
+    - name: Hawaii Disco Team
+
+# --- app.py: MemoScreen ---
+cancel: "取消"
+memo_input_help: "输入备注 (Ctrl+S 保存, Escape 取消)"
+close: "关闭"
+
+# --- app.py: ArticleScreen ---
+browser: "浏览器"
+translate: "翻译"
+original: "原文"
+loading_body: "正在加载文章..."
+translation_tab: "翻译"
+press_t_to_translate: "按 t 键翻译"
+translating: "翻译中..."
+insight_tab: "洞察"
+press_i_for_insight: "按 i 键生成洞察"
+
+# --- app.py: AddFeedScreen ---
+add_feed_help: "添加订阅 (Enter 下一步/确认, Escape 取消)"
+rss_url_placeholder: "RSS URL (例: https://example.com/feed.xml)"
+feed_name_placeholder: "订阅名称 (例: GeekNews)"
+invalid_url_scheme: "URL 必须以 http:// 或 https:// 开头"
+
+# --- app.py: SearchScreen ---
+search_help: "输入搜索关键词 (Enter 确认, Escape 取消)"
+search_placeholder: "搜索文章..."
+
+# --- app.py: HawaiiDiscoApp status messages ---
+refreshing: "正在刷新..."
+new_articles_found: "发现 {count} 篇新文章"
+no_new_articles: "没有新文章"
+claude_cli_not_found: "未找到 Claude CLI"
+generating_insight: "正在生成洞察..."
+bookmark_added: "\u2605 已收藏: {title}"
+bookmark_removed: "已取消收藏: {title}"
+bookmark_first: "请先收藏文章"
+memo_saved: "备注已保存"
+searching: "搜索: {query}"
+search_no_results: "'{query}' 无搜索结果 (Escape 清除)"
+search_cleared: "搜索已清除"
+bookmarks_only: "\u2605 仅显示收藏"
+feed_added: "已添加订阅: {name}"
+already_translated: "已翻译 (在详情面板查看)"
+translated_preview: "翻译: {title}"
+translation_failed: "翻译失败，请重试。"
+
+# --- OPML ---
+opml_import_help: "输入 OPML 文件路径 (Enter 确认, Escape 取消)"
+opml_path_placeholder: ".opml 文件路径"
+opml_import_success: "从 OPML 导入了 {count} 个订阅"
+opml_import_empty: "OPML 文件中未找到订阅"
+opml_import_error: "OPML 导入失败: {error}"
+opml_export_success: "订阅已导出到 {path}"
+opml_export_error: "OPML 导出失败: {error}"
+opml_no_feeds: "没有可导出的订阅"
+opml_import: "导入 OPML"
+opml_export: "导出 OPML"
+
+# --- Feed delete ---
+confirm_delete_feed: "删除订阅 '{name}'？({count} 篇文章将被删除)"
+confirm_delete_hint: "y: 确认 / n 或 Esc: 取消"
+feed_deleted: "已删除订阅: {name} (删除了 {count} 篇文章)"
+
+# --- Feed filter ---
+feed_filter_active: "订阅: {name}"
+feed_filter_cleared: "订阅筛选已清除"
+
+# --- FeedListScreen / BookmarkListScreen ---
+feed_list_title: "已订阅列表"
+no_feeds: "未配置订阅。按 'a' 添加订阅。"
+article_count: "{count} 篇文章"
+feeds: "订阅列表"
+bookmark_list_title: "收藏文章"
+no_bookmarks: "没有收藏的文章。"
+bookmarks_label: "收藏"
+
+# --- BookmarkListScreen: AI analysis ---
+bookmark_analysis_title: "收藏分析 (近7天)"
+generating_bookmark_analysis: "正在生成收藏分析..."
+bookmark_analysis_complete: "收藏分析完成"
+bookmark_analysis_failed: "收藏分析失败"
+no_recent_bookmarks: "近7天没有收藏的文章。"
+bookmark_articles_section: "收藏列表"
+
+# --- widgets/status.py ---
+nav_move: "\u2191\u2193 移动"
+read: "阅读"
+insight: "洞察"
+bookmark: "收藏"
+refresh: "刷新"
+search: "搜索"
+filter: "筛选"
+add_feed: "添加订阅"
+quit: "退出"
+last_refresh: "上次刷新: {time}"
+
+# --- widgets/detail.py ---
+select_article: "请选择文章"
+
+# --- widgets/timeline.py ---
+just_now: "刚刚"
+minutes_ago: "{n}分钟前"
+hours_ago: "{n}小时前"
+days_ago: "{n}天前"
+
+# --- reader.py ---
+fetch_error: "无法获取页面 ({error})"
+extract_error: "无法提取正文。"
+truncated: "... (已截断)"
+
+# --- fetcher.py ---
+no_title: "(无标题)"
+
+# --- bookmark.py ---
+bm_source: "来源"
+bm_date: "日期"
+bm_link: "链接"
+bm_insight: "洞察"
+bm_memo_section: "## 备注"
+bm_no_memo: "(无备注)"
+
+# --- insight.py ---
+insight_failed: "洞察生成失败"
+
+# --- translate.py ---
+translation_failed_short: "翻译失败"
+
+# --- Tag ---
+tag_edit_help: "用逗号分隔输入标签 (Enter 保存, Escape 取消)"
+tag_placeholder: "例: tech, python, ai"
+tag_saved: "标签已保存"
+tag_list_title: "标签列表"
+no_tags: "暂无标签。在收藏文章上按 'c' 添加标签。"
+tag_count: "{count} 篇文章"
+tag_filter_active: "标签: {tag}"
+tag_filter_cleared: "标签筛选已清除"
+bookmark_first_for_tag: "添加标签前请先收藏文章"
+tags_label: "标签"
+
+# --- Theme ---
+theme_list_title: "选择主题"
+theme_applied: "主题: {name}"
+theme_dark: "深色"
+theme_light: "浅色"
+theme_label: "主题"

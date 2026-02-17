@@ -47,5 +47,11 @@ testpaths = ["tests"]
 target-version = "py311"
 line-length = 120
 
+[tool.hatch.build.targets.wheel]
+packages = ["hawaiidisco"]
+
+[tool.hatch.build.targets.wheel.force-include]
+"hawaiidisco/i18n/locales" = "hawaiidisco/i18n/locales"
+
 [project.scripts]
 hawaiidisco = "hawaiidisco.app:main"

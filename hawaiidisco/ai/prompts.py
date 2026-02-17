@@ -3,12 +3,16 @@ from __future__ import annotations
 
 # 언어 코드 → 언어명 매핑
 LANG_NAMES: dict[str, str] = {
-    "ko": "Korean",
     "en": "English",
+    "ko": "Korean",
+    "ja": "Japanese",
+    "zh-CN": "Simplified Chinese",
+    "es": "Spanish",
+    "de": "German",
 }
 
 # 번역 대상 언어 (영어 제외)
-TRANSLATABLE_LANGS: frozenset[str] = frozenset({"ko"})
+TRANSLATABLE_LANGS: frozenset[str] = frozenset({"ko", "ja", "zh-CN", "es", "de"})
 
 
 def get_lang_name(lang: str) -> str:
