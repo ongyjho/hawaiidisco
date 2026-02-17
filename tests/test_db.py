@@ -515,3 +515,87 @@ class TestGetRecentBookmarkedArticles:
 
         assert not errors, f"스레드에서 에러 발생: {errors[0]}"
         assert len(results) == 1
+
+
+class TestToggleRead:
+    """Tests for toggle_read method."""
+
+    def test_toggle_unread_to_read(self, db: Database) -> None:
+        """읽지 않은 글을 읽음으로 토글한다."""
+        _insert_sample(db, "tr-1")
+        new_state = db.toggle_read("tr-1")
+        assert new_state is True
+        article = db.get_article("tr-1")
+        assert article is not None
+        assert article.is_read is True
+
+    def test_toggle_read_to_unread(self, db: Database) -> None:
+        """읽은 글을 안읽음으로 토글한다."""
+        _insert_sample(db, "tr-2")
+        db.mark_read("tr-2")
+        new_state = db.toggle_read("tr-2")
+        assert new_state is False
+        article = db.get_article("tr-2")
+        assert article is not None
+        assert article.is_read is False
+
+    def test_toggle_nonexistent_returns_false(self, db: Database) -> None:
+        """존재하지 않는 글은 False를 반환한다."""
+        result = db.toggle_read("nonexistent")
+        assert result is False
+
+    def test_double_toggle_restores_state(self, db: Database) -> None:
+        """두 번 토글하면 원래 상태로 돌아간다."""
+        _insert_sample(db, "tr-3")
+        db.toggle_read("tr-3")  # unread -> read
+        db.toggle_read("tr-3")  # read -> unread
+        article = db.get_article("tr-3")
+        assert article is not None
+        assert article.is_read is False
+
+
+class TestMarkAllRead:
+    """Tests for mark_all_read method."""
+
+    def test_mark_all_read(self, db: Database) -> None:
+        """모든 안읽은 글을 읽음으로 처리한다."""
+        for i in range(3):
+            _insert_sample(db, f"mar-{i}")
+        count = db.mark_all_read()
+        assert count == 3
+        for i in range(3):
+            article = db.get_article(f"mar-{i}")
+            assert article is not None
+            assert article.is_read is True
+
+    def test_mark_all_read_by_feed(self, db: Database) -> None:
+        """특정 피드의 안읽은 글만 읽음으로 처리한다."""
+        db.upsert_article("mar-a1", "Feed A", "A1", "https://a.com/1", None, None)
+        db.upsert_article("mar-a2", "Feed A", "A2", "https://a.com/2", None, None)
+        db.upsert_article("mar-b1", "Feed B", "B1", "https://b.com/1", None, None)
+        count = db.mark_all_read(feed_name="Feed A")
+        assert count == 2
+        assert db.get_article("mar-a1").is_read is True
+        assert db.get_article("mar-a2").is_read is True
+        assert db.get_article("mar-b1").is_read is False
+
+    def test_mark_all_read_already_read(self, db: Database) -> None:
+        """이미 읽은 글은 카운트에 포함되지 않는다."""
+        _insert_sample(db, "mar-r1")
+        db.mark_read("mar-r1")
+        count = db.mark_all_read()
+        assert count == 0
+
+    def test_mark_all_read_empty_db(self, db: Database) -> None:
+        """글이 없으면 0을 반환한다."""
+        count = db.mark_all_read()
+        assert count == 0
+
+    def test_mark_all_read_mixed_state(self, db: Database) -> None:
+        """읽은 글과 안읽은 글이 섞인 경우 안읽은 글만 처리한다."""
+        _insert_sample(db, "mar-m1")
+        _insert_sample(db, "mar-m2")
+        _insert_sample(db, "mar-m3")
+        db.mark_read("mar-m1")
+        count = db.mark_all_read()
+        assert count == 2

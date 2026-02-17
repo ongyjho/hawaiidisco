@@ -44,8 +44,8 @@ class StatusBar(Static):
         groups = [
             # 탐색
             f"[dim]{t('nav_move')}[/]  [bold]Enter[/] [dim]{t('read')}[/]  [bold]o[/] [dim]{t('browser')}[/]",
-            # 북마크/태그
-            f"[bold]b[/] [dim]{t('bookmark')}[/]  [bold]c[/] [dim]{t('tags_label')}[/]  [bold]l[/] [dim]{t('bookmarks_label')}[/]  [bold]f[/] [dim]{t('filter')}[/]  [bold]u[/] [dim]{t('unread_label')}[/]",
+            # 북마크/태그/읽음
+            f"[bold]b[/] [dim]{t('bookmark')}[/]  [bold]R[/] [dim]{t('mark_read_label')}[/]  [bold]A[/] [dim]{t('mark_all_read_label')}[/]  [bold]u[/] [dim]{t('unread_label')}[/]  [bold]f[/] [dim]{t('filter')}[/]",
             # 콘텐츠
             f"[bold]r[/] [dim]{t('refresh')}[/]  [bold]t[/] [dim]{t('translate')}[/]  [bold]/[/] [dim]{t('search')}[/]  [bold]T[/] [dim]{t('tags_label')}[/]",
             # 앱
