@@ -1,5 +1,34 @@
 # Changelog
 
+## [0.3.0](https://github.com/ongyjho/hawaiidisco/compare/v0.2.4...v0.3.0) (2026-02-17)
+
+
+### Features
+
+* add --setup-obsidian interactive CLI wizard ([5b59ae0](https://github.com/ongyjho/hawaiidisco/commit/5b59ae078448d5dc4ab3813757c2b19d5cc9cbfc))
+* add mark read/unread and mark all read actions ([505d26b](https://github.com/ongyjho/hawaiidisco/commit/505d26bf8b268e6e1e2704b964d71d371a4159de))
+* add mark read/unread and mark all read actions ([dfb1108](https://github.com/ongyjho/hawaiidisco/commit/dfb1108256d594d16199fe60221b7aeb696847f1))
+* add persona-based personalized insights ([c3caf8f](https://github.com/ongyjho/hawaiidisco/commit/c3caf8fc9251f8ed53a402006058dd22cb938b6c))
+* add unread filter and DB query performance indexes ([be3e0f4](https://github.com/ongyjho/hawaiidisco/commit/be3e0f4ad17381b5e8b2e1ddfa1ed1b5d25aca46))
+* add unread filter and DB query performance indexes ([296fbfb](https://github.com/ongyjho/hawaiidisco/commit/296fbfb155f2afc698793f42bdebd4d14996dece))
+
+
+### Bug Fixes
+
+* increase max_tokens and timeout for long article translation ([da3bb6a](https://github.com/ongyjho/hawaiidisco/commit/da3bb6a9ea6c302a1f1b2458440d561060045b41))
+
+
+### Documentation
+
+* document generate() timeout and max_tokens params in CLAUDE.md ([9f4aca3](https://github.com/ongyjho/hawaiidisco/commit/9f4aca3b20cbc59d0ddfbc03bccfc7728d805a40))
+* update README for v0.2.3 with integrations ([86b2aa5](https://github.com/ongyjho/hawaiidisco/commit/86b2aa56c77896983a7e2befa781d9a9eb62ae75))
+* update README for v0.2.3 with Obsidian/Notion integration guides ([4d8f5da](https://github.com/ongyjho/hawaiidisco/commit/4d8f5da8093af886b1bc33943fd873c50d55d1c7))
+
+
+### Miscellaneous
+
+* translate all Korean comments and docstrings to English ([0e43f69](https://github.com/ongyjho/hawaiidisco/commit/0e43f699ce48146f0dab1bcde7845fd69e75a1e0))
+
 ## [0.2.4](https://github.com/ongyjho/hawaiidisco/compare/v0.2.3...v0.2.4) (2026-02-17)
 
 
