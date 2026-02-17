@@ -148,3 +148,12 @@ theme_applied: "主题: {name}"
 theme_dark: "深色"
 theme_light: "浅色"
 theme_label: "主题"
+
+# --- Obsidian ---
+obsidian_saved: "已保存到Obsidian: {title}"
+obsidian_save_failed: "Obsidian保存失败: {error}"
+obsidian_not_configured: "Obsidian未配置 (请检查config.yml)"
+obsidian_vault_not_found: "找不到Obsidian仓库: {path}"
+obsidian_deleted: "已删除Obsidian笔记: {title}"
+obsidian_auto_saved: "\u2605 书签 + Obsidian: {title}"
+save_to_obsidian: "保存到Obsidian"

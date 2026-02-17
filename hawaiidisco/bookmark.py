@@ -1,43 +1,25 @@
 """Save bookmarks as Markdown files."""
 from __future__ import annotations
 
-import re
 from pathlib import Path
 
 from hawaiidisco.db import Article
 from hawaiidisco.i18n import t
+from hawaiidisco.md_render import article_date_str, safe_path, slugify
 
-
-def _slugify(text: str, max_len: int = 50) -> str:
-    """Convert a title into a filename-safe slug."""
-    # Replace whitespace with hyphens
-    slug = re.sub(r"\s+", "-", text.strip())
-    # Remove characters unsuitable for filenames
-    slug = re.sub(r"[^\w가-힣\-]", "", slug)
-    return slug[:max_len]
-
-
-def _safe_path(bookmark_dir: Path, filename: str) -> Path:
-    """경로가 bookmark_dir 하위인지 검증한다."""
-    filepath = (bookmark_dir / filename).resolve()
-    if not filepath.is_relative_to(bookmark_dir.resolve()):
-        raise ValueError(f"Path traversal detected: {filename}")
-    return filepath
+# Backward-compatible aliases for external callers and tests
+_slugify = slugify
+_safe_path = safe_path
 
 
 def save_bookmark_md(article: Article, bookmark_dir: Path, memo: str | None = None) -> Path:
     """Save a bookmark as a Markdown file. Return the created file path."""
     bookmark_dir.mkdir(parents=True, exist_ok=True)
 
-    date_str = ""
-    if article.published_at:
-        date_str = article.published_at.strftime("%Y-%m-%d")
-    else:
-        date_str = article.fetched_at.strftime("%Y-%m-%d")
-
-    slug = _slugify(article.title)
+    date_str = article_date_str(article)
+    slug = slugify(article.title)
     filename = f"{date_str}-{slug}.md"
-    filepath = _safe_path(bookmark_dir, filename)
+    filepath = safe_path(bookmark_dir, filename)
 
     lines = [
         f"# {article.title}",
@@ -61,15 +43,10 @@ def save_bookmark_md(article: Article, bookmark_dir: Path, memo: str | None = No
 
 def delete_bookmark_md(article: Article, bookmark_dir: Path) -> None:
     """Delete a bookmark Markdown file."""
-    date_str = ""
-    if article.published_at:
-        date_str = article.published_at.strftime("%Y-%m-%d")
-    else:
-        date_str = article.fetched_at.strftime("%Y-%m-%d")
-
-    slug = _slugify(article.title)
+    date_str = article_date_str(article)
+    slug = slugify(article.title)
     filename = f"{date_str}-{slug}.md"
-    filepath = _safe_path(bookmark_dir, filename)
+    filepath = safe_path(bookmark_dir, filename)
 
     if filepath.exists():
         filepath.unlink()

@@ -148,3 +148,12 @@ theme_applied: "Tema: {name}"
 theme_dark: "oscuro"
 theme_light: "claro"
 theme_label: "Tema"
+
+# --- Obsidian ---
+obsidian_saved: "Guardado en Obsidian: {title}"
+obsidian_save_failed: "Error al guardar en Obsidian: {error}"
+obsidian_not_configured: "Obsidian no configurado (revisa config.yml)"
+obsidian_vault_not_found: "Bóveda de Obsidian no encontrada: {path}"
+obsidian_deleted: "Nota de Obsidian eliminada: {title}"
+obsidian_auto_saved: "\u2605 Marcado + Obsidian: {title}"
+save_to_obsidian: "Guardar en Obsidian"
