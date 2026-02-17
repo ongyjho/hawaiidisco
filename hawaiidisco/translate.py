@@ -17,7 +17,7 @@ from hawaiidisco.i18n import get_lang, t
 logger = logging.getLogger(__name__)
 
 
-def translate_text(text: str, provider: AIProvider, *, timeout: int = 60, lang: str = "") -> str | None:
+def translate_text(text: str, provider: AIProvider, *, timeout: int = 120, lang: str = "") -> str | None:
     """Translate text using the AI provider."""
     if not provider.is_available() or not text:
         return None

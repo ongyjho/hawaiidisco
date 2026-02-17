@@ -44,9 +44,9 @@ class StatusBar(Static):
         groups = [
             # Navigation
             f"[dim]{t('nav_move')}[/]  [bold]Enter[/] [dim]{t('read')}[/]  [bold]o[/] [dim]{t('browser')}[/]",
-            # Bookmarks / Tags
-            f"[bold]b[/] [dim]{t('bookmark')}[/]  [bold]c[/] [dim]{t('tags_label')}[/]  [bold]l[/] [dim]{t('bookmarks_label')}[/]  [bold]f[/] [dim]{t('filter')}[/]",
-            # Content
+            # 북마크/태그
+            f"[bold]b[/] [dim]{t('bookmark')}[/]  [bold]c[/] [dim]{t('tags_label')}[/]  [bold]l[/] [dim]{t('bookmarks_label')}[/]  [bold]f[/] [dim]{t('filter')}[/]  [bold]u[/] [dim]{t('unread_label')}[/]",
+            # 콘텐츠
             f"[bold]r[/] [dim]{t('refresh')}[/]  [bold]t[/] [dim]{t('translate')}[/]  [bold]/[/] [dim]{t('search')}[/]  [bold]T[/] [dim]{t('tags_label')}[/]",
             # App
             f"[bold]a[/] [dim]{t('add_feed')}[/]  [bold]S[/] [dim]{t('theme_label')}[/]  [bold]q[/] [dim]{t('quit')}[/]",

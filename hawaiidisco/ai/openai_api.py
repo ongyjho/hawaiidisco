@@ -22,7 +22,7 @@ class OpenAIProvider:
             self._client = openai.OpenAI(api_key=self._api_key)
         return self._client
 
-    def generate(self, prompt: str, *, timeout: int = 30) -> str | None:
+    def generate(self, prompt: str, *, timeout: int = 30, max_tokens: int = 4096) -> str | None:
         """Generate text using the OpenAI API."""
         if not self.is_available():
             return None
@@ -31,7 +31,7 @@ class OpenAIProvider:
             response = client.chat.completions.create(
                 model=self._model,
                 messages=[{"role": "user", "content": prompt}],
-                max_tokens=1024,
+                max_tokens=max_tokens,
                 timeout=timeout,
             )
             if response.choices:

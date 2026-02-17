@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.4](https://github.com/ongyjho/hawaiidisco/compare/v0.2.3...v0.2.4) (2026-02-17)
+
+
+### Bug Fixes
+
+* guard all worker-thread query_one calls against NoMatches ([a13126c](https://github.com/ongyjho/hawaiidisco/commit/a13126c2b9504831ce79fd3a109db2cec245c53b))
+* guard query_one calls against NoMatches crash ([b802b7d](https://github.com/ongyjho/hawaiidisco/commit/b802b7d1ddf0bd47fc8766f1400a1e5488f6b949))
+
 ## [0.2.3](https://github.com/ongyjho/hawaiidisco/compare/v0.2.2...v0.2.3) (2026-02-17)
 
 

@@ -43,7 +43,7 @@ Textual TUI app with AI-powered RSS reading. Entry point: `hawaiidisco/app.py:ma
 - Worker → UI: `call_from_thread()` only
 
 ### AI Provider Pattern
-`ai/base.py` defines `AIProvider` Protocol (`generate`, `is_available`, `name`). Implementations: `claude_cli.py` (subprocess), `anthropic_api.py`, `openai_api.py`. Factory: `ai/__init__.py:get_provider()`. `anthropic`/`openai` are optional extras.
+`ai/base.py` defines `AIProvider` Protocol (`generate`, `is_available`, `name`). Implementations: `claude_cli.py` (subprocess), `anthropic_api.py`, `openai_api.py`. Factory: `ai/__init__.py:get_provider()`. `anthropic`/`openai` are optional extras. `generate()` accepts `timeout` (default 30s) and `max_tokens` (default 4096) keyword args.
 
 ### Prompt Pattern
 Single English template in `ai/prompts.py` with `{output_language}` injection for bilingual output.
