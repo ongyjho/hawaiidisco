@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.1](https://github.com/ongyjho/hawaiidisco/compare/v0.3.0...v0.3.1) (2026-02-17)
+
+
+### Miscellaneous
+
+* **main:** release 0.3.0 ([0f44178](https://github.com/ongyjho/hawaiidisco/commit/0f441786d2eae53c62d22216a2fda31db85252c5))
+
 ## [0.3.0](https://github.com/ongyjho/hawaiidisco/compare/v0.2.4...v0.3.0) (2026-02-17)
 
 
