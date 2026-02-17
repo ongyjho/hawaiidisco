@@ -10,10 +10,7 @@ from pathlib import Path
 from textual import work
 from textual.app import App, ComposeResult
 from textual.binding import Binding
-from textual.containers import Vertical, VerticalScroll
-from textual.screen import ModalScreen
 from textual.css.query import NoMatches
-from textual.widgets import Input, ListView, ListItem, Static, TabbedContent, TabPane, TextArea
 
 from hawaiidisco.ai import get_provider
 from hawaiidisco.config import Config, FeedConfig, load_config, ensure_dirs, add_feed, remove_feed
@@ -24,882 +21,25 @@ from hawaiidisco.db import Article, Database
 from hawaiidisco.fetcher import fetch_all_feeds
 from hawaiidisco.insight import get_or_generate_insight
 from hawaiidisco.bookmark import save_bookmark_md, delete_bookmark_md
-from hawaiidisco.obsidian import save_obsidian_note, delete_obsidian_note, validate_vault_path
+from hawaiidisco.obsidian import save_obsidian_note, save_digest_note, delete_obsidian_note, validate_vault_path
+from hawaiidisco.digest import get_or_generate_digest
 from hawaiidisco.translate import translate_article_meta, translate_text
 from hawaiidisco.widgets.timeline import Timeline
 from hawaiidisco.widgets.detail import DetailView
 from hawaiidisco.widgets.status import StatusBar
-
-
-class MemoScreen(ModalScreen[str]):
-    """Bookmark memo input screen."""
-
-    BINDINGS = [
-        Binding("escape", "cancel", "Cancel"),
-    ]
-
-    DEFAULT_CSS = """
-    MemoScreen {
-        align: center middle;
-    }
-    #memo-container {
-        width: 60;
-        height: 12;
-        padding: 1 2;
-        background: $surface;
-        border: solid $primary;
-    }
-    #memo-title {
-        text-align: center;
-        padding-bottom: 1;
-    }
-    #memo-input {
-        height: 6;
-    }
-    """
-
-    def __init__(self, current_memo: str = "") -> None:
-        super().__init__()
-        self._current_memo = current_memo
-
-    def compose(self) -> ComposeResult:
-        with Vertical(id="memo-container"):
-            yield Static(t("memo_input_help"), id="memo-title")
-            yield TextArea(self._current_memo, id="memo-input")
-
-    def key_ctrl_s(self) -> None:
-        text_area = self.query_one("#memo-input", TextArea)
-        self.dismiss(text_area.text)
-
-    def action_cancel(self) -> None:
-        self.dismiss("")
-
-
-class ArticleScreen(ModalScreen):
-    """Article body viewer screen."""
-
-    BINDINGS = [
-        Binding("escape", "dismiss", "Close"),
-        Binding("q", "dismiss", "Close"),
-        Binding("o", "open_browser", "Browser"),
-        Binding("t", "translate_body", "Translate"),
-        Binding("i", "insight", "Insight"),
-        Binding("j", "scroll_down", "Down", show=False),
-        Binding("k", "scroll_up", "Up", show=False),
-        Binding("down", "scroll_down", "Down", show=False),
-        Binding("up", "scroll_up", "Up", show=False),
-        Binding("pagedown", "page_down", "Page Down", show=False),
-        Binding("pageup", "page_up", "Page Up", show=False),
-        Binding("g", "scroll_home", "Top", show=False),
-        Binding("G", "scroll_end", "Bottom", show=False),
-    ]
-
-    DEFAULT_CSS = """
-    ArticleScreen {
-        align: center middle;
-    }
-    #article-container {
-        width: 90%;
-        height: 90%;
-        background: $surface;
-        border: solid $primary;
-    }
-    #article-header {
-        padding: 1 2;
-        height: auto;
-        max-height: 5;
-        background: $primary-background;
-    }
-    .article-scroll {
-        height: 1fr;
-        padding: 1 2;
-    }
-    """
-
-    def __init__(
-        self,
-        title: str,
-        meta: str,
-        body: str,
-        link: str,
-        article_id: str | None = None,
-        translated_body: str | None = None,
-        description: str | None = None,
-        insight: str | None = None,
-    ) -> None:
-        super().__init__()
-        self._title = title
-        self._meta = meta
-        self._body = body
-        self._link = link
-        self._article_id = article_id
-        self._translated_body = translated_body
-        self._description = description
-        self._insight = insight
-
-    def compose(self) -> ComposeResult:
-        with Vertical(id="article-container"):
-            yield Static(
-                f"[bold]{_escape(self._title)}[/]\n[dim]{_escape(self._meta)}[/]",
-                id="article-header",
-            )
-            with TabbedContent(id="article-tabs"):
-                with TabPane(t("original"), id="tab-original"):
-                    with VerticalScroll(classes="article-scroll"):
-                        yield Static(
-                            _escape(self._body) or f"[dim]{t('loading_body')}[/]",
-                            id="article-body",
-                        )
-                with TabPane(t("translation_tab"), id="tab-translated"):
-                    with VerticalScroll(classes="article-scroll"):
-                        yield Static(
-                            _escape(self._translated_body) if self._translated_body
-                            else f"[dim]{t('press_t_to_translate')}[/]",
-                            id="translated-body",
-                        )
-                with TabPane(t("insight_tab"), id="tab-insight"):
-                    with VerticalScroll(classes="article-scroll"):
-                        yield Static(
-                            _escape(self._insight) if self._insight
-                            else f"[dim]{t('press_i_for_insight')}[/]",
-                            id="insight-body",
-                        )
-
-    def on_mount(self) -> None:
-        # Activate insight tab if cached insight exists
-        if self._insight:
-            try:
-                self.query_one("#article-tabs", TabbedContent).active = "tab-insight"
-            except NoMatches:
-                pass
-        # Activate translation tab if cached translation exists (lower priority than insight)
-        elif self._translated_body:
-            try:
-                self.query_one("#article-tabs", TabbedContent).active = "tab-translated"
-            except NoMatches:
-                pass
-
-    def _get_active_scroll(self) -> VerticalScroll | None:
-        """현재 활성 탭의 VerticalScroll 위젯을 반환한다."""
-        try:
-            tabs = self.query_one("#article-tabs", TabbedContent)
-            pane = tabs.get_pane(tabs.active)
-            return pane.query_one(VerticalScroll)
-        except (NoMatches, Exception):
-            return None
-
-    def action_scroll_down(self) -> None:
-        if sw := self._get_active_scroll():
-            sw.scroll_down(animate=False)
-
-    def action_scroll_up(self) -> None:
-        if sw := self._get_active_scroll():
-            sw.scroll_up(animate=False)
-
-    def action_page_down(self) -> None:
-        if sw := self._get_active_scroll():
-            sw.scroll_page_down(animate=False)
-
-    def action_page_up(self) -> None:
-        if sw := self._get_active_scroll():
-            sw.scroll_page_up(animate=False)
-
-    def action_scroll_home(self) -> None:
-        if sw := self._get_active_scroll():
-            sw.scroll_home(animate=False)
-
-    def action_scroll_end(self) -> None:
-        if sw := self._get_active_scroll():
-            sw.scroll_end(animate=False)
-
-    def action_dismiss(self) -> None:
-        self.app.pop_screen()
-
-    def action_open_browser(self) -> None:
-        if not self._link.startswith(("http://", "https://")):
-            return
-        import webbrowser as wb
-        wb.open(self._link)
-
-    def update_body(self, text: str) -> None:
-        """Update the original tab body text."""
-        self._body = text
-        try:
-            self.query_one("#article-body", Static).update(_escape(text))
-        except NoMatches:
-            pass  # Not mounted yet; self._body will be used in compose
-
-    def update_translated_body(self, text: str) -> None:
-        """Update the translation tab body and activate the translation tab."""
-        self._translated_body = text
-        try:
-            self.query_one("#translated-body", Static).update(_escape(text))
-            self.query_one("#article-tabs", TabbedContent).active = "tab-translated"
-        except NoMatches:
-            pass  # Not mounted yet; self._translated_body will be used in compose
-
-    def action_translate_body(self) -> None:
-        """Toggle translation tab. Request translation if none exists."""
-        try:
-            tabs = self.query_one("#article-tabs", TabbedContent)
-        except NoMatches:
-            return
-
-        if self._translated_body:
-            # Toggle tab if translation already exists
-            if tabs.active == "tab-translated":
-                tabs.active = "tab-original"
-            else:
-                tabs.active = "tab-translated"
-            return
-
-        # Request translation if none exists
-        self.query_one("#translated-body", Static).update(f"[dim]{t('translating')}[/]")
-        tabs.active = "tab-translated"
-        self.app._translate_article_body(self)  # type: ignore[attr-defined]
-
-    def update_insight(self, text: str) -> None:
-        """Update the insight tab body and activate the insight tab."""
-        self._insight = text
-        try:
-            self.query_one("#insight-body", Static).update(_escape(text))
-            self.query_one("#article-tabs", TabbedContent).active = "tab-insight"
-        except NoMatches:
-            pass  # Not mounted yet; self._insight will be used in compose
-
-    def action_insight(self) -> None:
-        """Toggle insight tab. Request generation if none exists."""
-        try:
-            tabs = self.query_one("#article-tabs", TabbedContent)
-        except NoMatches:
-            return
-
-        if self._insight:
-            # Toggle tab if insight already exists
-            if tabs.active == "tab-insight":
-                tabs.active = "tab-original"
-            else:
-                tabs.active = "tab-insight"
-            return
-
-        # Request generation if no insight exists
-        self.query_one("#insight-body", Static).update(
-            f"[dim]{t('generating_insight')}[/]"
-        )
-        tabs.active = "tab-insight"
-        self.app._generate_insight_for_screen(self)  # type: ignore[attr-defined]
-
-
-def _escape(text: str) -> str:
-    """Escape Rich markup characters."""
-    return text.replace("[", "\\[")
-
-
-class AddFeedScreen(ModalScreen[tuple]):
-    """Feed addition input screen."""
-
-    DEFAULT_CSS = """
-    AddFeedScreen {
-        align: center middle;
-    }
-    #add-feed-container {
-        width: 65;
-        height: 10;
-        padding: 1 2;
-        background: $surface;
-        border: solid $primary;
-    }
-    #add-feed-title {
-        text-align: center;
-        padding-bottom: 1;
-    }
-    """
-
-    def compose(self) -> ComposeResult:
-        with Vertical(id="add-feed-container"):
-            yield Static(t("add_feed_help"), id="add-feed-title")
-            yield Input(placeholder=t("rss_url_placeholder"), id="feed-url")
-            yield Input(placeholder=t("feed_name_placeholder"), id="feed-name")
-
-    def on_mount(self) -> None:
-        self.query_one("#feed-url", Input).focus()
-
-    def on_input_submitted(self, event: Input.Submitted) -> None:
-        if event.input.id == "feed-url":
-            self.query_one("#feed-name", Input).focus()
-        elif event.input.id == "feed-name":
-            url = self.query_one("#feed-url", Input).value.strip()
-            name = self.query_one("#feed-name", Input).value.strip()
-            # http(s) 스키마만 허용
-            if url and url.startswith(("http://", "https://")):
-                self.dismiss((url, name or url))
-            elif url:
-                self.query_one("#feed-url", Input).value = ""
-                self.query_one("#feed-url", Input).placeholder = t("invalid_url_scheme")
-                self.query_one("#feed-url", Input).focus()
-            else:
-                self.dismiss(())
-
-    def key_escape(self) -> None:
-        self.dismiss(())
-
-
-class ConfirmDeleteScreen(ModalScreen[bool]):
-    """삭제 확인 모달."""
-
-    DEFAULT_CSS = """
-    ConfirmDeleteScreen {
-        align: center middle;
-    }
-    #confirm-container {
-        width: 60;
-        height: auto;
-        padding: 1 2;
-        background: $surface;
-        border: solid $error;
-    }
-    #confirm-message {
-        text-align: center;
-        padding-bottom: 1;
-    }
-    #confirm-hint {
-        text-align: center;
-        color: $text-muted;
-    }
-    """
-
-    def __init__(self, message: str) -> None:
-        super().__init__()
-        self._message = message
-
-    def compose(self) -> ComposeResult:
-        with Vertical(id="confirm-container"):
-            yield Static(self._message, id="confirm-message")
-            yield Static(t("confirm_delete_hint"), id="confirm-hint")
-
-    def key_y(self) -> None:
-        self.dismiss(True)
-
-    def key_n(self) -> None:
-        self.dismiss(False)
-
-    def key_escape(self) -> None:
-        self.dismiss(False)
-
-
-class FeedItem(ListItem):
-    """Individual item in the feed list."""
-
-    def __init__(self, feed: FeedConfig, count: int) -> None:
-        super().__init__()
-        self.feed = feed
-        self._count = count
-
-    def compose(self) -> ComposeResult:
-        yield Static(self._format())
-
-    def _format(self) -> str:
-        return (
-            f"[bold cyan]{_escape(self.feed.name)}[/]\n"
-            f"  [dim]{_escape(self.feed.url)}[/]\n"
-            f"  {t('article_count', count=self._count)}"
-        )
-
-
-class FeedListScreen(ModalScreen[str | None]):
-    """Subscribed feed list screen."""
-
-    BINDINGS = [
-        Binding("escape", "dismiss_screen", "Close"),
-        Binding("q", "dismiss_screen", "Close"),
-    ]
-
-    DEFAULT_CSS = """
-    FeedListScreen {
-        align: center middle;
-    }
-    #feed-list-container {
-        width: 80%;
-        height: 80%;
-        background: $surface;
-        border: solid $primary;
-    }
-    #feed-list-title {
-        text-align: center;
-        text-style: bold;
-        padding: 1 2;
-    }
-    #feed-listview {
-        height: 1fr;
-    }
-    """
-
-    def __init__(
-        self,
-        feeds: list[FeedConfig],
-        counts: dict[str, int],
-    ) -> None:
-        super().__init__()
-        self._feeds = feeds
-        self._counts = counts
-
-    def compose(self) -> ComposeResult:
-        with Vertical(id="feed-list-container"):
-            yield Static(t("feed_list_title"), id="feed-list-title")
-            if not self._feeds:
-                yield Static(
-                    f"[dim]{t('no_feeds')}[/]",
-                    id="feed-empty",
-                )
-            else:
-                yield ListView(id="feed-listview")
-
-    def on_mount(self) -> None:
-        if not self._feeds:
-            return
-        lv = self.query_one("#feed-listview", ListView)
-        for feed in self._feeds:
-            count = self._counts.get(feed.name, 0)
-            lv.append(FeedItem(feed, count))
-
-    def on_list_view_selected(self, event: ListView.Selected) -> None:
-        if isinstance(event.item, FeedItem):
-            self.dismiss(event.item.feed.name)
-
-    def action_dismiss_screen(self) -> None:
-        self.dismiss(None)
-
-    def key_j(self) -> None:
-        try:
-            self.query_one("#feed-listview", ListView).action_cursor_down()
-        except NoMatches:
-            pass
-
-    def key_k(self) -> None:
-        try:
-            self.query_one("#feed-listview", ListView).action_cursor_up()
-        except NoMatches:
-            pass
-
-    def key_d(self) -> None:
-        """선택된 피드 삭제 확인 모달을 띄운다."""
-        try:
-            lv = self.query_one("#feed-listview", ListView)
-        except NoMatches:
-            return
-        if lv.highlighted_child is None or not isinstance(lv.highlighted_child, FeedItem):
-            return
-        feed_item: FeedItem = lv.highlighted_child
-        feed = feed_item.feed
-        count = feed_item._count
-        msg = t("confirm_delete_feed", name=feed.name, count=count)
-        self.app.push_screen(
-            ConfirmDeleteScreen(msg),
-            lambda confirmed: self._do_delete(confirmed, feed),
-        )
-
-    def _do_delete(self, confirmed: bool, feed: FeedConfig) -> None:
-        """삭제 확인 후 실제 삭제를 수행한다."""
-        if not confirmed:
-            return
-        self.app._do_delete_feed(feed)  # type: ignore[attr-defined]
-        self.dismiss(None)
-
-
-class BookmarkItem(ListItem):
-    """Individual item in the bookmark list."""
-
-    def __init__(
-        self,
-        article: Article,
-        memo: str | None = None,
-        tags: list[str] | None = None,
-    ) -> None:
-        super().__init__()
-        self.article = article
-        self._memo = memo
-        self._tags = tags or []
-
-    def compose(self) -> ComposeResult:
-        yield Static(self._format())
-
-    def _format(self) -> str:
-        a = self.article
-        date_str = ""
-        if a.published_at:
-            date_str = a.published_at.strftime("%Y-%m-%d")
-        elif a.fetched_at:
-            date_str = a.fetched_at.strftime("%Y-%m-%d")
-
-        line1 = f"[bold yellow]★[/] [bold]{_escape(a.title)}[/]"
-        line2 = f"  [cyan]{_escape(a.feed_name)}[/] · [dim]{date_str}[/]"
-        lines = [line1, line2]
-        if self._tags:
-            lines.append(f"  [dim]🏷 {_escape(', '.join(self._tags))}[/]")
-        if a.insight:
-            lines.append(f"  [green]{_escape(a.insight)}[/]")
-        if self._memo:
-            preview = self._memo if len(self._memo) <= 50 else self._memo[:47] + "..."
-            lines.append(f"  [italic dim]{_escape(preview)}[/]")
-        return "\n".join(lines)
-
-
-class BookmarkListScreen(ModalScreen[str | None]):
-    """Bookmark list screen."""
-
-    BINDINGS = [
-        Binding("escape", "dismiss_screen", "Close"),
-        Binding("q", "dismiss_screen", "Close"),
-    ]
-
-    DEFAULT_CSS = """
-    BookmarkListScreen {
-        align: center middle;
-    }
-    #bookmark-list-container {
-        width: 80%;
-        height: 80%;
-        background: $surface;
-        border: solid $primary;
-    }
-    #bookmark-list-title {
-        text-align: center;
-        text-style: bold;
-        padding: 1 2;
-    }
-    #bookmark-analysis {
-        max-height: 40%;
-        padding: 1 2;
-        overflow-y: auto;
-        border-bottom: solid $primary;
-    }
-    #bookmark-articles-title {
-        text-style: bold;
-        padding: 0 2;
-    }
-    #bookmark-listview {
-        height: 1fr;
-    }
-    """
-
-    def __init__(
-        self,
-        articles: list[Article],
-        memos: dict[str, str],
-        tags: dict[str, list[str]] | None = None,
-    ) -> None:
-        super().__init__()
-        self._articles = articles
-        self._memos = memos
-        self._tags = tags or {}
-
-    def compose(self) -> ComposeResult:
-        with Vertical(id="bookmark-list-container"):
-            yield Static("Bookmarks", id="bookmark-list-title")
-            if not self._articles:
-                yield Static(
-                    "[dim]No bookmarked articles.[/]",
-                    id="bookmark-empty",
-                )
-            else:
-                yield Static(t("bookmark_articles_section"), id="bookmark-articles-title")
-                lv = ListView(id="bookmark-listview")
-                yield lv
-
-    def on_mount(self) -> None:
-        if not self._articles:
-            return
-        lv = self.query_one("#bookmark-listview", ListView)
-        for article in self._articles:
-            memo = self._memos.get(article.id)
-            article_tags = self._tags.get(article.id, [])
-            lv.append(BookmarkItem(article, memo, article_tags))
-
-    def update_analysis(self, text: str) -> None:
-        """AI 분석 결과를 갱신한다."""
-        try:
-            self.query_one("#bookmark-analysis", Static).update(_escape(text))
-        except NoMatches:
-            pass
-
-    def on_list_view_selected(self, event: ListView.Selected) -> None:
-        if isinstance(event.item, BookmarkItem):
-            self.dismiss(event.item.article.id)
-
-    def action_dismiss_screen(self) -> None:
-        self.dismiss(None)
-
-    def key_j(self) -> None:
-        try:
-            lv = self.query_one("#bookmark-listview", ListView)
-            lv.action_cursor_down()
-        except NoMatches:
-            pass
-
-    def key_k(self) -> None:
-        try:
-            lv = self.query_one("#bookmark-listview", ListView)
-            lv.action_cursor_up()
-        except NoMatches:
-            pass
-
-
-class OpmlImportScreen(ModalScreen[str]):
-    """OPML file path input screen."""
-
-    DEFAULT_CSS = """
-    OpmlImportScreen {
-        align: center middle;
-    }
-    #opml-container {
-        width: 60;
-        height: auto;
-        padding: 1 2;
-        background: $surface;
-        border: solid $primary;
-    }
-    """
-
-    def compose(self) -> ComposeResult:
-        with Vertical(id="opml-container"):
-            yield Static(t("opml_import_help"))
-            yield Input(placeholder=t("opml_path_placeholder"), id="opml-path")
-
-    def on_input_submitted(self, event: Input.Submitted) -> None:
-        self.dismiss(event.value.strip())
-
-    def key_escape(self) -> None:
-        self.dismiss("")
-
-
-class TagEditScreen(ModalScreen[str]):
-    """태그 편집 모달."""
-
-    DEFAULT_CSS = """
-    TagEditScreen {
-        align: center middle;
-    }
-    #tag-container {
-        width: 55;
-        height: auto;
-        padding: 1 2;
-        background: $surface;
-        border: solid $primary;
-    }
-    """
-
-    def __init__(self, current_tags: str = "") -> None:
-        super().__init__()
-        self._current_tags = current_tags
-
-    def compose(self) -> ComposeResult:
-        with Vertical(id="tag-container"):
-            yield Static(t("tag_edit_help"))
-            yield Input(
-                value=self._current_tags,
-                placeholder=t("tag_placeholder"),
-                id="tag-input",
-            )
-
-    def on_input_submitted(self, event: Input.Submitted) -> None:
-        self.dismiss(event.value)
-
-    def key_escape(self) -> None:
-        self.dismiss("")
-
-
-class TagItem(ListItem):
-    """태그 목록의 개별 항목."""
-
-    def __init__(self, tag: str, count: int) -> None:
-        super().__init__()
-        self.tag = tag
-        self._count = count
-
-    def compose(self) -> ComposeResult:
-        yield Static(self._format())
-
-    def _format(self) -> str:
-        return (
-            f"[bold cyan]{_escape(self.tag)}[/]"
-            f"  [dim]{t('tag_count', count=self._count)}[/]"
-        )
-
-
-class TagListScreen(ModalScreen[str | None]):
-    """태그 필터 목록 모달."""
-
-    BINDINGS = [
-        Binding("escape", "dismiss_screen", "Close"),
-        Binding("q", "dismiss_screen", "Close"),
-    ]
-
-    DEFAULT_CSS = """
-    TagListScreen {
-        align: center middle;
-    }
-    #tag-list-container {
-        width: 60%;
-        height: 70%;
-        background: $surface;
-        border: solid $primary;
-    }
-    #tag-list-title {
-        text-align: center;
-        text-style: bold;
-        padding: 1 2;
-    }
-    #tag-listview {
-        height: 1fr;
-    }
-    """
-
-    def __init__(self, tags_with_counts: list[tuple[str, int]]) -> None:
-        super().__init__()
-        self._tags = tags_with_counts
-
-    def compose(self) -> ComposeResult:
-        with Vertical(id="tag-list-container"):
-            yield Static(t("tag_list_title"), id="tag-list-title")
-            if not self._tags:
-                yield Static(f"[dim]{t('no_tags')}[/]", id="tag-empty")
-            else:
-                yield ListView(id="tag-listview")
-
-    def on_mount(self) -> None:
-        if not self._tags:
-            return
-        lv = self.query_one("#tag-listview", ListView)
-        for tag, count in self._tags:
-            lv.append(TagItem(tag, count))
-
-    def on_list_view_selected(self, event: ListView.Selected) -> None:
-        if isinstance(event.item, TagItem):
-            self.dismiss(event.item.tag)
-
-    def action_dismiss_screen(self) -> None:
-        self.dismiss(None)
-
-    def key_j(self) -> None:
-        try:
-            self.query_one("#tag-listview", ListView).action_cursor_down()
-        except NoMatches:
-            pass
-
-    def key_k(self) -> None:
-        try:
-            self.query_one("#tag-listview", ListView).action_cursor_up()
-        except NoMatches:
-            pass
-
-
-class ThemeItem(ListItem):
-    """테마 목록의 개별 항목."""
-
-    def __init__(self, theme_name: str, is_dark: bool, is_current: bool) -> None:
-        super().__init__()
-        self.theme_name = theme_name
-        self._is_dark = is_dark
-        self._is_current = is_current
-
-    def compose(self) -> ComposeResult:
-        yield Static(self._format())
-
-    def _format(self) -> str:
-        marker = "[bold green]● [/]" if self._is_current else "  "
-        mode = t("theme_dark") if self._is_dark else t("theme_light")
-        return f"{marker}[bold]{_escape(self.theme_name)}[/]  [dim]({mode})[/]"
-
-
-class ThemeListScreen(ModalScreen[str | None]):
-    """테마 선택 모달."""
-
-    BINDINGS = [
-        Binding("escape", "dismiss_screen", "Close"),
-        Binding("q", "dismiss_screen", "Close"),
-    ]
-
-    DEFAULT_CSS = """
-    ThemeListScreen {
-        align: center middle;
-    }
-    #theme-list-container {
-        width: 50%;
-        height: 70%;
-        background: $surface;
-        border: solid $primary;
-    }
-    #theme-list-title {
-        text-align: center;
-        text-style: bold;
-        padding: 1 2;
-    }
-    #theme-listview {
-        height: 1fr;
-    }
-    """
-
-    def __init__(self, themes: list[tuple[str, bool]], current_theme: str) -> None:
-        super().__init__()
-        self._themes = themes
-        self._current_theme = current_theme
-
-    def compose(self) -> ComposeResult:
-        with Vertical(id="theme-list-container"):
-            yield Static(t("theme_list_title"), id="theme-list-title")
-            yield ListView(id="theme-listview")
-
-    def on_mount(self) -> None:
-        lv = self.query_one("#theme-listview", ListView)
-        for name, is_dark in self._themes:
-            lv.append(ThemeItem(name, is_dark, name == self._current_theme))
-
-    def on_list_view_selected(self, event: ListView.Selected) -> None:
-        if isinstance(event.item, ThemeItem):
-            self.dismiss(event.item.theme_name)
-
-    def action_dismiss_screen(self) -> None:
-        self.dismiss(None)
-
-    def key_j(self) -> None:
-        try:
-            self.query_one("#theme-listview", ListView).action_cursor_down()
-        except NoMatches:
-            pass
-
-    def key_k(self) -> None:
-        try:
-            self.query_one("#theme-listview", ListView).action_cursor_up()
-        except NoMatches:
-            pass
-
-
-class SearchScreen(ModalScreen[str]):
-    """Search input screen."""
-
-    DEFAULT_CSS = """
-    SearchScreen {
-        align: center middle;
-    }
-    #search-container {
-        width: 50;
-        height: auto;
-        padding: 1 2;
-        background: $surface;
-        border: solid $primary;
-    }
-    """
-
-    def compose(self) -> ComposeResult:
-        with Vertical(id="search-container"):
-            yield Static(t("search_help"))
-            yield Input(placeholder=t("search_placeholder"), id="search-input")
-
-    def on_input_submitted(self, event: Input.Submitted) -> None:
-        self.dismiss(event.value)
-
-    def key_escape(self) -> None:
-        self.dismiss("")
+from hawaiidisco.screens import (
+    MemoScreen,
+    ArticleScreen,
+    AddFeedScreen,
+    FeedListScreen,
+    BookmarkListScreen,
+    OpmlImportScreen,
+    TagEditScreen,
+    TagListScreen,
+    ThemeListScreen,
+    SearchScreen,
+    DigestScreen,
+)
 
 
 class HawaiiDiscoApp(App):
@@ -934,6 +74,7 @@ class HawaiiDiscoApp(App):
         Binding("V", "select_theme", "Theme"),
         Binding("I", "import_opml", "Import OPML"),
         Binding("E", "export_opml", "Export OPML"),
+        Binding("D", "digest", t("digest_label")),
     ]
 
     def __init__(self) -> None:
@@ -1554,6 +695,55 @@ class HawaiiDiscoApp(App):
         else:
             self.call_from_thread(
                 screen.update_translated_body, t("translation_failed")
+            )
+
+    # --- Digest Actions ---
+
+    def action_digest(self) -> None:
+        """Generate and display a weekly article digest."""
+        if not self.config.digest.enabled:
+            self.query_one(StatusBar).set_message(t("digest_not_enabled"))
+            return
+        screen = DigestScreen()
+        self.push_screen(screen)
+        self._generate_digest(screen)
+
+    @work(thread=True)
+    def _generate_digest(self, screen: DigestScreen) -> None:
+        """Generate digest in background thread."""
+        try:
+            content, article_count = get_or_generate_digest(
+                self.db, self.ai, self.config.digest
+            )
+            self.call_from_thread(screen.update_content, content, article_count)
+            try:
+                status = self.query_one(StatusBar)
+                self.call_from_thread(status.set_message, t("digest_complete"))
+            except NoMatches:
+                pass
+        except ValueError as exc:
+            self.call_from_thread(screen.update_error, str(exc))
+        except Exception:
+            self.call_from_thread(screen.update_error, t("digest_generation_failed"))
+
+    def _save_digest_to_obsidian(self, content: str, article_count: int) -> None:
+        """Save digest to Obsidian vault."""
+        if not self.config.obsidian.enabled:
+            self.query_one(StatusBar).set_message(t("obsidian_not_configured"))
+            return
+        if not validate_vault_path(self.config.obsidian):
+            self.query_one(StatusBar).set_message(
+                t("obsidian_vault_not_found", path=str(self.config.obsidian.vault_path))
+            )
+            return
+        try:
+            save_digest_note(
+                content, article_count, self.config.obsidian, self.config.digest.period_days
+            )
+            self.query_one(StatusBar).set_message(t("digest_saved_obsidian"))
+        except Exception as exc:
+            self.query_one(StatusBar).set_message(
+                t("obsidian_save_failed", error=type(exc).__name__)
             )
 
     # --- Background Auto-Refresh ---
