@@ -148,3 +148,12 @@ theme_applied: "Theme: {name}"
 theme_dark: "dark"
 theme_light: "light"
 theme_label: "Theme"
+
+# --- Obsidian ---
+obsidian_saved: "Saved to Obsidian: {title}"
+obsidian_save_failed: "Obsidian save failed: {error}"
+obsidian_not_configured: "Obsidian not configured (check config.yml)"
+obsidian_vault_not_found: "Obsidian vault not found: {path}"
+obsidian_deleted: "Obsidian note removed: {title}"
+obsidian_auto_saved: "\u2605 Bookmarked + Obsidian: {title}"
+save_to_obsidian: "Save to Obsidian"

@@ -31,3 +31,15 @@ bookmark_dir: ~/.local/share/hawaiidisco/bookmarks
 # Allow insecure SSL connections (disable certificate verification as fallback)
 # WARNING: Only enable this if you trust the feeds and understand the security risks
 allow_insecure_ssl: false
+
+# Obsidian vault integration
+# Saves bookmarked articles as Obsidian-formatted notes with frontmatter
+# obsidian:
+#   enabled: false
+#   vault_path: ~/Documents/MyVault    # Path to your Obsidian vault
+#   folder: "hawaii-disco"             # Folder inside vault for notes
+#   template: default                  # default | minimal
+#   auto_save: true                    # Auto-save on bookmark toggle
+#   include_insight: true              # Include AI insight in notes
+#   include_translation: true          # Include translation in notes
+#   tags_prefix: "hawaiidisco"         # Prefix for Obsidian tags

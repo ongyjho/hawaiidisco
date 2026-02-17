@@ -37,6 +37,18 @@ class InsightConfig:
 
 
 @dataclass
+class ObsidianConfig:
+    enabled: bool = False
+    vault_path: Path = field(default_factory=lambda: Path(""))
+    folder: str = "hawaii-disco"
+    template: str = "default"  # default | minimal
+    auto_save: bool = True
+    include_insight: bool = True
+    include_translation: bool = True
+    tags_prefix: str = "hawaiidisco"
+
+
+@dataclass
 class Config:
     language: str = "en"
     theme: str = "textual-dark"
@@ -47,6 +59,7 @@ class Config:
     bookmark_dir: Path = Path("~/.local/share/hawaiidisco/bookmarks")
     db_path: Path = Path("~/.local/share/hawaiidisco/hawaiidisco.db")
     allow_insecure_ssl: bool = False
+    obsidian: ObsidianConfig = field(default_factory=ObsidianConfig)
 
 
 def _resolve_env(value: str) -> str:
@@ -103,6 +116,21 @@ def load_config(path: Path | None = None) -> Config:
         os.path.expanduser(raw.get("bookmark_dir", "~/.local/share/hawaiidisco/bookmarks"))
     )
 
+    # Obsidian configuration
+    obs_raw = raw.get("obsidian", {})
+    obs_vault_str = obs_raw.get("vault_path", "")
+    obs_vault = Path(os.path.expanduser(obs_vault_str)) if obs_vault_str else Path("")
+    obsidian = ObsidianConfig(
+        enabled=obs_raw.get("enabled", False),
+        vault_path=obs_vault,
+        folder=obs_raw.get("folder", "hawaii-disco"),
+        template=obs_raw.get("template", "default"),
+        auto_save=obs_raw.get("auto_save", True),
+        include_insight=obs_raw.get("include_insight", True),
+        include_translation=obs_raw.get("include_translation", True),
+        tags_prefix=obs_raw.get("tags_prefix", "hawaiidisco"),
+    )
+
     config = Config(
         language=language,
         theme=raw.get("theme", "textual-dark"),
@@ -113,6 +141,7 @@ def load_config(path: Path | None = None) -> Config:
         bookmark_dir=bookmark_dir,
         db_path=Path("~/.local/share/hawaiidisco/hawaiidisco.db").expanduser(),
         allow_insecure_ssl=raw.get("allow_insecure_ssl", False),
+        obsidian=obsidian,
     )
     return config
 
@@ -161,7 +190,10 @@ def remove_feed(feed_url: str) -> bool:
 
 def ensure_dirs(config: Config) -> None:
     """Create required directories if they do not exist. 소유자만 접근 가능하도록 권한 설정."""
-    for d in (config.db_path.parent, config.bookmark_dir):
+    dirs: list[Path] = [config.db_path.parent, config.bookmark_dir]
+    if config.obsidian.enabled and config.obsidian.vault_path != Path(""):
+        dirs.append(config.obsidian.vault_path / config.obsidian.folder)
+    for d in dirs:
         d.mkdir(parents=True, exist_ok=True, mode=0o700)
         # 기존 디렉토리도 권한 보정
         d.chmod(0o700)

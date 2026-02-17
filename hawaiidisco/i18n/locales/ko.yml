@@ -148,3 +148,12 @@ theme_applied: "테마: {name}"
 theme_dark: "다크"
 theme_light: "라이트"
 theme_label: "테마"
+
+# --- Obsidian ---
+obsidian_saved: "Obsidian에 저장됨: {title}"
+obsidian_save_failed: "Obsidian 저장 실패: {error}"
+obsidian_not_configured: "Obsidian 미설정 (config.yml을 확인하세요)"
+obsidian_vault_not_found: "Obsidian 볼트를 찾을 수 없습니다: {path}"
+obsidian_deleted: "Obsidian 노트 삭제됨: {title}"
+obsidian_auto_saved: "\u2605 북마크 + Obsidian: {title}"
+save_to_obsidian: "Obsidian에 저장"

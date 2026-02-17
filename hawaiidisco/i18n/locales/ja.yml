@@ -148,3 +148,12 @@ theme_applied: "テーマ: {name}"
 theme_dark: "ダーク"
 theme_light: "ライト"
 theme_label: "テーマ"
+
+# --- Obsidian ---
+obsidian_saved: "Obsidianに保存しました: {title}"
+obsidian_save_failed: "Obsidian保存失敗: {error}"
+obsidian_not_configured: "Obsidian未設定 (config.ymlを確認してください)"
+obsidian_vault_not_found: "Obsidianボルトが見つかりません: {path}"
+obsidian_deleted: "Obsidianノートを削除しました: {title}"
+obsidian_auto_saved: "\u2605 ブックマーク + Obsidian: {title}"
+save_to_obsidian: "Obsidianに保存"

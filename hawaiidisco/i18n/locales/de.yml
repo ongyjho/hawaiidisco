@@ -148,3 +148,12 @@ theme_applied: "Design: {name}"
 theme_dark: "dunkel"
 theme_light: "hell"
 theme_label: "Design"
+
+# --- Obsidian ---
+obsidian_saved: "In Obsidian gespeichert: {title}"
+obsidian_save_failed: "Obsidian-Speichern fehlgeschlagen: {error}"
+obsidian_not_configured: "Obsidian nicht konfiguriert (config.yml prüfen)"
+obsidian_vault_not_found: "Obsidian-Vault nicht gefunden: {path}"
+obsidian_deleted: "Obsidian-Notiz entfernt: {title}"
+obsidian_auto_saved: "\u2605 Lesezeichen + Obsidian: {title}"
+save_to_obsidian: "In Obsidian speichern"

@@ -24,6 +24,7 @@ from hawaiidisco.db import Article, Database
 from hawaiidisco.fetcher import fetch_all_feeds
 from hawaiidisco.insight import get_or_generate_insight
 from hawaiidisco.bookmark import save_bookmark_md, delete_bookmark_md
+from hawaiidisco.obsidian import save_obsidian_note, delete_obsidian_note, validate_vault_path
 from hawaiidisco.translate import translate_article_meta, translate_text
 from hawaiidisco.widgets.timeline import Timeline
 from hawaiidisco.widgets.detail import DetailView
@@ -928,7 +929,8 @@ class HawaiiDiscoApp(App):
         Binding("t", "translate", "Translate"),
         Binding("c", "edit_tags", "Tags"),
         Binding("T", "tag_list", "Tag list"),
-        Binding("S", "select_theme", "Theme"),
+        Binding("S", "save_obsidian", t("save_to_obsidian")),
+        Binding("V", "select_theme", "Theme"),
         Binding("I", "import_opml", "Import OPML"),
         Binding("E", "export_opml", "Export OPML"),
     ]
@@ -945,6 +947,15 @@ class HawaiiDiscoApp(App):
         self._feed_filter: str | None = None
         self._tag_filter: str | None = None
         self.theme = self.config.theme
+
+        # Validate Obsidian vault path at startup
+        if self.config.obsidian.enabled and not validate_vault_path(self.config.obsidian):
+            import sys
+
+            print(
+                f"Warning: Obsidian vault path not found: {self.config.obsidian.vault_path}",
+                file=sys.stderr,
+            )
 
     def compose(self) -> ComposeResult:
         yield Timeline([], id="timeline")
@@ -1093,9 +1104,26 @@ class HawaiiDiscoApp(App):
             updated = self.db.get_article(article.id)
             if updated:
                 save_bookmark_md(updated, self.config.bookmark_dir)
+                # Auto-save to Obsidian if enabled
+                if self.config.obsidian.enabled and self.config.obsidian.auto_save:
+                    if validate_vault_path(self.config.obsidian):
+                        try:
+                            tags = self.db.get_bookmark_tags(article.id)
+                            save_obsidian_note(updated, self.config.obsidian, tags=tags)
+                            status.set_message(t("obsidian_auto_saved", title=article.title[:30]))
+                            self._reload_articles()
+                            return
+                        except Exception:
+                            pass  # Fall through to standard bookmark message
             status.set_message(t("bookmark_added", title=article.title[:30]))
         else:
             delete_bookmark_md(article, self.config.bookmark_dir)
+            if self.config.obsidian.enabled and self.config.obsidian.auto_save:
+                if validate_vault_path(self.config.obsidian):
+                    try:
+                        delete_obsidian_note(article, self.config.obsidian)
+                    except Exception:
+                        pass
             status.set_message(t("bookmark_removed", title=article.title[:30]))
 
         self._reload_articles()
@@ -1117,7 +1145,46 @@ class HawaiiDiscoApp(App):
         updated = self.db.get_article(article.id)
         if updated:
             save_bookmark_md(updated, self.config.bookmark_dir, memo)
+            # Update Obsidian note too
+            if self.config.obsidian.enabled and self.config.obsidian.auto_save:
+                if validate_vault_path(self.config.obsidian):
+                    try:
+                        tags = self.db.get_bookmark_tags(article.id)
+                        save_obsidian_note(updated, self.config.obsidian, memo=memo, tags=tags)
+                    except Exception:
+                        pass
         self.query_one(StatusBar).set_message(t("memo_saved"))
+
+    def action_save_obsidian(self) -> None:
+        """Manually save the current article to Obsidian vault."""
+        article = self._get_current_article()
+        if not article:
+            return
+        if not self.config.obsidian.enabled:
+            self.query_one(StatusBar).set_message(t("obsidian_not_configured"))
+            return
+        if not validate_vault_path(self.config.obsidian):
+            self.query_one(StatusBar).set_message(
+                t("obsidian_vault_not_found", path=str(self.config.obsidian.vault_path))
+            )
+            return
+
+        updated = self.db.get_article(article.id)
+        if not updated:
+            return
+
+        memo = self.db.get_bookmark_memo(article.id)
+        tags = self.db.get_bookmark_tags(article.id)
+
+        try:
+            save_obsidian_note(updated, self.config.obsidian, memo=memo, tags=tags)
+            self.query_one(StatusBar).set_message(
+                t("obsidian_saved", title=article.title[:30])
+            )
+        except Exception as exc:
+            self.query_one(StatusBar).set_message(
+                t("obsidian_save_failed", error=type(exc).__name__)
+            )
 
     def action_search(self) -> None:
         self.push_screen(SearchScreen(), self._on_search_result)

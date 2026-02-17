@@ -149,6 +149,71 @@ class TestResolveEnv:
         assert config.ai.api_key == "resolved-key"
 
 
+class TestObsidianConfig:
+    """Tests for Obsidian configuration loading."""
+
+    def test_default_obsidian_disabled(self, config_file: Path) -> None:
+        """Obsidian is disabled by default when not in config."""
+        config_file.write_text("feeds: []\n", encoding="utf-8")
+        config = load_config(config_file)
+        assert config.obsidian.enabled is False
+        assert config.obsidian.vault_path == Path("")
+
+    def test_obsidian_config_loading(self, config_file: Path) -> None:
+        """Full obsidian config is parsed correctly."""
+        data = {
+            "feeds": [],
+            "obsidian": {
+                "enabled": True,
+                "vault_path": "/tmp/test-vault",
+                "folder": "my-notes",
+                "template": "minimal",
+                "auto_save": False,
+                "include_insight": False,
+                "include_translation": True,
+                "tags_prefix": "hd",
+            },
+        }
+        config_file.write_text(yaml.dump(data), encoding="utf-8")
+        config = load_config(config_file)
+        assert config.obsidian.enabled is True
+        assert config.obsidian.vault_path == Path("/tmp/test-vault")
+        assert config.obsidian.folder == "my-notes"
+        assert config.obsidian.template == "minimal"
+        assert config.obsidian.auto_save is False
+        assert config.obsidian.include_insight is False
+        assert config.obsidian.include_translation is True
+        assert config.obsidian.tags_prefix == "hd"
+
+    def test_obsidian_vault_path_expanduser(self, config_file: Path) -> None:
+        """vault_path with ~ is expanded."""
+        data = {
+            "feeds": [],
+            "obsidian": {
+                "enabled": True,
+                "vault_path": "~/Documents/Vault",
+            },
+        }
+        config_file.write_text(yaml.dump(data), encoding="utf-8")
+        config = load_config(config_file)
+        assert "~" not in str(config.obsidian.vault_path)
+
+    def test_obsidian_defaults_when_partial(self, config_file: Path) -> None:
+        """Missing obsidian fields use defaults."""
+        data = {
+            "feeds": [],
+            "obsidian": {
+                "enabled": True,
+                "vault_path": "/tmp/vault",
+            },
+        }
+        config_file.write_text(yaml.dump(data), encoding="utf-8")
+        config = load_config(config_file)
+        assert config.obsidian.folder == "hawaii-disco"
+        assert config.obsidian.auto_save is True
+        assert config.obsidian.tags_prefix == "hawaiidisco"
+
+
 class TestRemoveFeed:
     """Tests for the remove_feed function."""
 
