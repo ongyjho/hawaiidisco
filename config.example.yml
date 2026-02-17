@@ -52,3 +52,16 @@ allow_insecure_ssl: false
 #   include_insight: true              # Include AI insight in notes
 #   include_translation: true          # Include translation in notes
 #   tags_prefix: "hawaiidisco"         # Prefix for Obsidian tags
+
+# Notion integration
+# Saves bookmarked articles and digests to Notion via API
+# notion:
+#   enabled: false
+#   api_key: "${NOTION_API_KEY}"           # Notion integration token
+#   mode: page                             # database | page
+#   database_id: ""                        # Notion database ID (for database mode)
+#   parent_page_id: ""                     # Parent page ID (for page mode)
+#   auto_save: true                        # Auto-save on bookmark toggle
+#   include_insight: true                  # Include AI insight
+#   include_translation: true              # Include translation
+#   tags_prefix: "hawaiidisco"             # Prefix for tags

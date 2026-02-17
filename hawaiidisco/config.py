@@ -44,6 +44,7 @@ class DigestConfig:
     max_articles: int = 20
     bookmarked_only: bool = False
     save_to_obsidian: bool = True
+    save_to_notion: bool = False
 
 
 @dataclass
@@ -52,6 +53,19 @@ class ObsidianConfig:
     vault_path: Path = field(default_factory=lambda: Path(""))
     folder: str = "hawaii-disco"
     template: str = "default"  # default | minimal
+    auto_save: bool = True
+    include_insight: bool = True
+    include_translation: bool = True
+    tags_prefix: str = "hawaiidisco"
+
+
+@dataclass
+class NotionConfig:
+    enabled: bool = False
+    api_key: str = ""
+    mode: str = "page"  # database | page
+    database_id: str = ""
+    parent_page_id: str = ""
     auto_save: bool = True
     include_insight: bool = True
     include_translation: bool = True
@@ -71,6 +85,7 @@ class Config:
     allow_insecure_ssl: bool = False
     obsidian: ObsidianConfig = field(default_factory=ObsidianConfig)
     digest: DigestConfig = field(default_factory=DigestConfig)
+    notion: NotionConfig = field(default_factory=NotionConfig)
 
 
 def _resolve_env(value: str) -> str:
@@ -160,6 +175,22 @@ def load_config(path: Path | None = None) -> Config:
         max_articles=dig_raw.get("max_articles", 20),
         bookmarked_only=dig_raw.get("bookmarked_only", False),
         save_to_obsidian=dig_raw.get("save_to_obsidian", True),
+        save_to_notion=dig_raw.get("save_to_notion", False),
+    )
+
+    # Notion configuration
+    ntn_raw = raw.get("notion", {})
+    notion_api_key = _resolve_env(ntn_raw.get("api_key", ""))
+    notion = NotionConfig(
+        enabled=ntn_raw.get("enabled", False),
+        api_key=notion_api_key,
+        mode=ntn_raw.get("mode", "page"),
+        database_id=ntn_raw.get("database_id", ""),
+        parent_page_id=ntn_raw.get("parent_page_id", ""),
+        auto_save=ntn_raw.get("auto_save", True),
+        include_insight=ntn_raw.get("include_insight", True),
+        include_translation=ntn_raw.get("include_translation", True),
+        tags_prefix=ntn_raw.get("tags_prefix", "hawaiidisco"),
     )
 
     config = Config(
@@ -174,6 +205,7 @@ def load_config(path: Path | None = None) -> Config:
         allow_insecure_ssl=raw.get("allow_insecure_ssl", False),
         obsidian=obsidian,
         digest=digest,
+        notion=notion,
     )
     return config
 
@@ -317,3 +349,138 @@ def _setup_obsidian_interactive(raw: dict) -> None:
 
     print()
     print(t("setup_obsidian_complete", path=str(CONFIG_PATH)))
+
+
+def setup_notion() -> None:
+    """Interactive CLI wizard to configure Notion integration."""
+    from hawaiidisco.i18n import set_lang, t
+
+    _ensure_config()
+
+    raw: dict = {}
+    if CONFIG_PATH.exists():
+        with open(CONFIG_PATH, encoding="utf-8") as f:
+            raw = yaml.safe_load(f) or {}
+    set_lang(raw.get("language", "en"))
+
+    try:
+        _setup_notion_interactive(raw)
+    except (KeyboardInterrupt, EOFError):
+        print()
+        print(t("setup_notion_cancelled"))
+
+
+def _setup_notion_interactive(raw: dict) -> None:
+    """Run the interactive Notion setup prompts and save to config."""
+    from hawaiidisco.i18n import t
+
+    print()
+    print(t("setup_notion_title"))
+    print()
+
+    existing = raw.get("notion", {})
+
+    # 1. API key (required)
+    default_key = existing.get("api_key", "")
+    while True:
+        prompt = t("setup_notion_api_key")
+        if default_key:
+            masked = default_key[:8] + "..." if len(default_key) > 8 else default_key
+            prompt += f" [{masked}]"
+        prompt += ": "
+        key_input = input(prompt).strip() or default_key
+        if not key_input:
+            print(t("setup_notion_api_key_required"))
+            continue
+        break
+
+    # 2. Mode (database / page)
+    default_mode = existing.get("mode", "page")
+    mode_input = input(t("setup_notion_mode") + f" [{default_mode}]: ").strip() or default_mode
+    if mode_input not in ("database", "page"):
+        mode_input = "page"
+
+    # 3. Database ID or parent page ID
+    if mode_input == "database":
+        default_db_id = existing.get("database_id", "")
+        while True:
+            prompt = t("setup_notion_database_id")
+            if default_db_id:
+                prompt += f" [{default_db_id}]"
+            prompt += ": "
+            db_id = input(prompt).strip() or default_db_id
+            if not db_id:
+                print(t("setup_notion_target_required"))
+                continue
+            break
+        parent_page_id = existing.get("parent_page_id", "")
+    else:
+        default_page_id = existing.get("parent_page_id", "")
+        while True:
+            prompt = t("setup_notion_parent_page_id")
+            if default_page_id:
+                prompt += f" [{default_page_id}]"
+            prompt += ": "
+            parent_page_id = input(prompt).strip() or default_page_id
+            if not parent_page_id:
+                print(t("setup_notion_target_required"))
+                continue
+            break
+        db_id = existing.get("database_id", "")
+
+    # 4. Auto-save on bookmark
+    auto_save = _prompt_yn(t("setup_notion_auto_save"), default=existing.get("auto_save", True))
+
+    # 5. Include AI insight
+    include_insight = _prompt_yn(
+        t("setup_notion_include_insight"), default=existing.get("include_insight", True)
+    )
+
+    # 6. Include translation
+    include_translation = _prompt_yn(
+        t("setup_notion_include_translation"), default=existing.get("include_translation", True)
+    )
+
+    # 7. Tags prefix
+    default_tags = existing.get("tags_prefix", "hawaiidisco")
+    tags_prefix = input(t("setup_notion_tags_prefix") + f" [{default_tags}]: ").strip() or default_tags
+
+    # 8. Optional connection test
+    print()
+    print(t("setup_notion_testing"))
+    try:
+        from hawaiidisco.notion import check_notion_connection
+
+        test_config = NotionConfig(
+            enabled=True,
+            api_key=key_input,
+            mode=mode_input,
+            database_id=db_id,
+            parent_page_id=parent_page_id,
+        )
+        if check_notion_connection(test_config):
+            print(t("setup_notion_test_success"))
+        else:
+            print(t("setup_notion_test_failed"))
+    except Exception:
+        print(t("setup_notion_test_failed"))
+
+    # Write to config.yml
+    raw["notion"] = {
+        "enabled": True,
+        "api_key": key_input,
+        "mode": mode_input,
+        "database_id": db_id,
+        "parent_page_id": parent_page_id,
+        "auto_save": auto_save,
+        "include_insight": include_insight,
+        "include_translation": include_translation,
+        "tags_prefix": tags_prefix,
+    }
+
+    CONFIG_PATH.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+    with open(CONFIG_PATH, "w", encoding="utf-8") as f:
+        yaml.dump(raw, f, allow_unicode=True, default_flow_style=False, sort_keys=False)
+
+    print()
+    print(t("setup_notion_complete", path=str(CONFIG_PATH)))

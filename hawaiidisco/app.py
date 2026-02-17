@@ -25,6 +25,7 @@ from hawaiidisco.fetcher import fetch_all_feeds
 from hawaiidisco.insight import get_or_generate_insight
 from hawaiidisco.bookmark import save_bookmark_md, delete_bookmark_md
 from hawaiidisco.obsidian import save_obsidian_note, save_digest_note, delete_obsidian_note, validate_vault_path
+from hawaiidisco.notion import save_notion_article, save_notion_digest, validate_notion_config
 from hawaiidisco.digest import get_or_generate_digest
 from hawaiidisco.translate import translate_article_meta, translate_text
 from hawaiidisco.screens.digest import DigestScreen
@@ -935,6 +936,7 @@ class HawaiiDiscoApp(App):
         Binding("c", "edit_tags", "Tags"),
         Binding("T", "tag_list", "Tag list"),
         Binding("S", "save_obsidian", t("save_to_obsidian")),
+        Binding("N", "save_notion", t("save_to_notion")),
         Binding("V", "select_theme", "Theme"),
         Binding("I", "import_opml", "Import OPML"),
         Binding("E", "export_opml", "Export OPML"),
@@ -1138,6 +1140,14 @@ class HawaiiDiscoApp(App):
                             return
                         except Exception:
                             pass  # Fall through to standard bookmark message
+                # Auto-save to Notion if enabled
+                if self.config.notion.enabled and self.config.notion.auto_save:
+                    if validate_notion_config(self.config.notion):
+                        tags = self.db.get_bookmark_tags(article.id)
+                        self._do_save_notion_bg(updated, None, tags)
+                        status.set_message(t("notion_auto_saved", title=article.title[:30]))
+                        self._reload_articles()
+                        return
             status.set_message(t("bookmark_added", title=article.title[:30]))
         else:
             delete_bookmark_md(article, self.config.bookmark_dir)
@@ -1176,6 +1186,11 @@ class HawaiiDiscoApp(App):
                         save_obsidian_note(updated, self.config.obsidian, memo=memo, tags=tags)
                     except Exception:
                         pass
+            # Update Notion too
+            if self.config.notion.enabled and self.config.notion.auto_save:
+                if validate_notion_config(self.config.notion):
+                    tags = self.db.get_bookmark_tags(article.id)
+                    self._do_save_notion_bg(updated, memo, tags)
         self.query_one(StatusBar).set_message(t("memo_saved"))
 
     def action_save_obsidian(self) -> None:
@@ -1208,6 +1223,52 @@ class HawaiiDiscoApp(App):
             self.query_one(StatusBar).set_message(
                 t("obsidian_save_failed", error=type(exc).__name__)
             )
+
+    def action_save_notion(self) -> None:
+        """Manually save the current article to Notion."""
+        article = self._get_current_article()
+        if not article:
+            return
+        if not self.config.notion.enabled:
+            self.query_one(StatusBar).set_message(t("notion_not_configured"))
+            return
+        if not validate_notion_config(self.config.notion):
+            self.query_one(StatusBar).set_message(t("notion_not_configured"))
+            return
+
+        updated = self.db.get_article(article.id)
+        if not updated:
+            return
+
+        memo = self.db.get_bookmark_memo(article.id)
+        tags = self.db.get_bookmark_tags(article.id)
+        self._do_save_notion_bg(updated, memo, tags)
+
+    @work(thread=True)
+    def _do_save_notion_bg(
+        self,
+        article: Article,
+        memo: str | None,
+        tags: list[str],
+    ) -> None:
+        """Save an article to Notion in a background thread."""
+        try:
+            save_notion_article(article, self.config.notion, memo=memo, tags=tags)
+            try:
+                status = self.query_one(StatusBar)
+                self.call_from_thread(
+                    status.set_message, t("notion_saved", title=article.title[:30])
+                )
+            except NoMatches:
+                pass
+        except Exception as exc:
+            try:
+                status = self.query_one(StatusBar)
+                self.call_from_thread(
+                    status.set_message, t("notion_save_failed", error=type(exc).__name__)
+                )
+            except NoMatches:
+                pass
 
     def action_search(self) -> None:
         self.push_screen(SearchScreen(), self._on_search_result)
@@ -1640,6 +1701,34 @@ class HawaiiDiscoApp(App):
                 t("obsidian_save_failed", error=type(exc).__name__)
             )
 
+    @work(thread=True)
+    def _save_digest_to_notion(self, content: str, article_count: int) -> None:
+        """Save digest to Notion in a background thread."""
+        if not self.config.notion.enabled or not validate_notion_config(self.config.notion):
+            try:
+                status = self.query_one(StatusBar)
+                self.call_from_thread(status.set_message, t("notion_not_configured"))
+            except NoMatches:
+                pass
+            return
+        try:
+            save_notion_digest(
+                content, article_count, self.config.notion, self.config.digest.period_days
+            )
+            try:
+                status = self.query_one(StatusBar)
+                self.call_from_thread(status.set_message, t("digest_saved_notion"))
+            except NoMatches:
+                pass
+        except Exception as exc:
+            try:
+                status = self.query_one(StatusBar)
+                self.call_from_thread(
+                    status.set_message, t("notion_save_failed", error=type(exc).__name__)
+                )
+            except NoMatches:
+                pass
+
     # --- Background Auto-Refresh ---
 
     def on_ready(self) -> None:
@@ -1691,12 +1780,23 @@ def main() -> None:
         action="store_true",
         help="Interactive Obsidian vault configuration wizard",
     )
+    parser.add_argument(
+        "--setup-notion",
+        action="store_true",
+        help="Interactive Notion integration configuration wizard",
+    )
     args = parser.parse_args()
 
     if args.setup_obsidian:
         from hawaiidisco.config import setup_obsidian
 
         setup_obsidian()
+        return
+
+    if args.setup_notion:
+        from hawaiidisco.config import setup_notion
+
+        setup_notion()
         return
 
     app = HawaiiDiscoApp()

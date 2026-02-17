@@ -4,7 +4,7 @@ from __future__ import annotations
 import threading
 from datetime import datetime
 from pathlib import Path
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -12,6 +12,7 @@ from hawaiidisco.ai.base import AIProvider
 from hawaiidisco.config import (
     Config,
     DigestConfig,
+    NotionConfig,
     ObsidianConfig,
     ensure_dirs,
     load_config,
@@ -19,6 +20,12 @@ from hawaiidisco.config import (
 from hawaiidisco.db import Article, Database
 from hawaiidisco.digest import get_or_generate_digest
 from hawaiidisco.insight import get_or_generate_insight
+from hawaiidisco.notion import (
+    _build_article_blocks,
+    _build_article_db_properties,
+    _build_article_page_properties,
+    save_notion_digest,
+)
 from hawaiidisco.obsidian import save_digest_note, save_obsidian_note
 from hawaiidisco.translate import translate_text
 
@@ -397,3 +404,57 @@ class TestDigestThreadSafety:
             t.join()
 
         assert len(errors) == 0, f"Errors in threads: {errors}"
+
+
+class TestNotionArticleFlow:
+    """Bookmark → build Notion payload → verify structure."""
+
+    def test_article_to_notion_db_mode(self, db: Database) -> None:
+        """Build Notion payload for database mode article save."""
+        article = _make_article(article_id="ntn-1", insight="Great insight")
+        _insert_article(db, article)
+
+        config = NotionConfig(
+            enabled=True, api_key="test", mode="database",
+            database_id="db-123", include_insight=True, include_translation=True,
+        )
+        blocks = _build_article_blocks(article, config, memo="My memo")
+        props = _build_article_db_properties(article, config, tags=["tech"])
+
+        block_texts = str(blocks)
+        assert "Summary" in block_texts
+        assert "Great insight" in block_texts
+        assert "My memo" in block_texts
+        assert "Name" in props
+        assert "Tags" in props
+        tag_names = [t["name"] for t in props["Tags"]["multi_select"]]
+        assert "hawaiidisco/tech" in tag_names
+
+    def test_article_to_notion_page_mode(self, db: Database) -> None:
+        """Build Notion payload for page mode article save."""
+        article = _make_article(article_id="ntn-2")
+        _insert_article(db, article)
+
+        config = NotionConfig(
+            enabled=True, api_key="test", mode="page",
+            parent_page_id="page-123",
+        )
+        blocks = _build_article_blocks(article, config)
+        props = _build_article_page_properties(article)
+
+        assert "title" in props
+        block_texts = str(blocks)
+        assert "Summary" in block_texts
+        assert "My Notes" in block_texts
+
+    @patch("hawaiidisco.notion._notion_request")
+    def test_digest_to_notion(self, mock_req: MagicMock) -> None:
+        """Save digest to Notion via mocked API."""
+        mock_req.return_value = {"id": "digest-page-id"}
+        config = NotionConfig(
+            enabled=True, api_key="test", mode="database",
+            database_id="db-123",
+        )
+        page_id = save_notion_digest("Theme 1\n\nTheme 2", 10, config, period_days=7)
+        assert page_id == "digest-page-id"
+        mock_req.assert_called_once()

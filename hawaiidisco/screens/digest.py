@@ -18,6 +18,7 @@ class DigestScreen(ModalScreen[None]):
         Binding("escape", "dismiss_screen", "Close"),
         Binding("q", "dismiss_screen", "Close"),
         Binding("S", "save_to_obsidian", t("save_to_obsidian")),
+        Binding("N", "save_to_notion", t("save_to_notion")),
     ]
 
     DEFAULT_CSS = """
@@ -79,6 +80,11 @@ class DigestScreen(ModalScreen[None]):
         """Trigger Obsidian save via the app."""
         if self._content:
             self.app._save_digest_to_obsidian(self._content, self._article_count)  # type: ignore[attr-defined]
+
+    def action_save_to_notion(self) -> None:
+        """Trigger Notion save via the app."""
+        if self._content:
+            self.app._save_digest_to_notion(self._content, self._article_count)  # type: ignore[attr-defined]
 
     # Vim-style scrolling
     def key_j(self) -> None:
