@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.2.3](https://github.com/ongyjho/hawaiidisco/compare/v0.2.2...v0.2.3) (2026-02-17)
+
+
+### Bug Fixes
+
+* guard DetailView queries against NoMatches during mount race ([8a19321](https://github.com/ongyjho/hawaiidisco/commit/8a19321d575d3f4a1d9c731f766b9a47beb1585f))
+
+
+### Documentation
+
+* update README and version for v0.2.2 ([bcc53c7](https://github.com/ongyjho/hawaiidisco/commit/bcc53c7ba3c59a6d895d532b2062db9acdf3688d))
+* update README and version for v0.2.2 ([49b4898](https://github.com/ongyjho/hawaiidisco/commit/49b4898a0e1a0975dc14c44dd9caf73e3293782b))
+
 ## [0.2.2](https://github.com/ongyjho/hawaiidisco/compare/v0.2.1...v0.2.2) (2026-02-17)
 
 
