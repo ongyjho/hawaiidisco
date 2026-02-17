@@ -10,6 +10,15 @@ from pathlib import Path
 
 
 @dataclass
+class Digest:
+    id: int
+    created_at: datetime
+    period_days: int
+    article_count: int
+    content: str
+
+
+@dataclass
 class Article:
     id: str
     feed_name: str
@@ -46,6 +55,14 @@ CREATE TABLE IF NOT EXISTS bookmarks (
     bookmarked_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     tags TEXT,
     memo TEXT
+);
+
+CREATE TABLE IF NOT EXISTS digests (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    period_days INTEGER NOT NULL,
+    article_count INTEGER NOT NULL,
+    content TEXT NOT NULL
 );
 
 """
@@ -334,6 +351,43 @@ class Database:
             "SELECT a.* FROM articles a JOIN bookmarks b ON a.id = b.article_id "
             "WHERE b.bookmarked_at >= datetime('now', ?) ORDER BY b.bookmarked_at DESC, b.id DESC",
             (f"-{days} days",),
+        ).fetchall()
+        return [self._row_to_article(row) for row in rows]
+
+    # --- Digest Operations ---
+
+    def save_digest(self, period_days: int, article_count: int, content: str) -> int:
+        """Save a digest and return its ID."""
+        cursor = self._get_conn().execute(
+            "INSERT INTO digests (period_days, article_count, content) VALUES (?, ?, ?)",
+            (period_days, article_count, content),
+        )
+        self._get_conn().commit()
+        return cursor.lastrowid  # type: ignore[return-value]
+
+    def get_latest_digest(self, period_days: int = 7) -> Digest | None:
+        """Return the most recent digest for the given period, or None."""
+        row = self._get_conn().execute(
+            "SELECT * FROM digests WHERE period_days = ? ORDER BY created_at DESC LIMIT 1",
+            (period_days,),
+        ).fetchone()
+        if not row:
+            return None
+        return Digest(
+            id=row["id"],
+            created_at=_parse_dt(row["created_at"]) or datetime.now(),
+            period_days=row["period_days"],
+            article_count=row["article_count"],
+            content=row["content"],
+        )
+
+    def get_recent_articles(self, days: int = 7, limit: int = 20) -> list[Article]:
+        """Return articles from the last N days, ordered by most recent."""
+        rows = self._get_conn().execute(
+            "SELECT * FROM articles "
+            "WHERE published_at >= datetime('now', ?) OR fetched_at >= datetime('now', ?) "
+            "ORDER BY published_at DESC, fetched_at DESC LIMIT ?",
+            (f"-{days} days", f"-{days} days", limit),
         ).fetchall()
         return [self._row_to_article(row) for row in rows]
 

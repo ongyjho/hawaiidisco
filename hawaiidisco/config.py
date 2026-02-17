@@ -37,6 +37,15 @@ class InsightConfig:
 
 
 @dataclass
+class DigestConfig:
+    enabled: bool = True
+    period_days: int = 7
+    max_articles: int = 20
+    bookmarked_only: bool = False
+    save_to_obsidian: bool = True
+
+
+@dataclass
 class ObsidianConfig:
     enabled: bool = False
     vault_path: Path = field(default_factory=lambda: Path(""))
@@ -60,6 +69,7 @@ class Config:
     db_path: Path = Path("~/.local/share/hawaiidisco/hawaiidisco.db")
     allow_insecure_ssl: bool = False
     obsidian: ObsidianConfig = field(default_factory=ObsidianConfig)
+    digest: DigestConfig = field(default_factory=DigestConfig)
 
 
 def _resolve_env(value: str) -> str:
@@ -131,6 +141,16 @@ def load_config(path: Path | None = None) -> Config:
         tags_prefix=obs_raw.get("tags_prefix", "hawaiidisco"),
     )
 
+    # Digest configuration
+    dig_raw = raw.get("digest", {})
+    digest = DigestConfig(
+        enabled=dig_raw.get("enabled", True),
+        period_days=dig_raw.get("period_days", 7),
+        max_articles=dig_raw.get("max_articles", 20),
+        bookmarked_only=dig_raw.get("bookmarked_only", False),
+        save_to_obsidian=dig_raw.get("save_to_obsidian", True),
+    )
+
     config = Config(
         language=language,
         theme=raw.get("theme", "textual-dark"),
@@ -142,6 +162,7 @@ def load_config(path: Path | None = None) -> Config:
         db_path=Path("~/.local/share/hawaiidisco/hawaiidisco.db").expanduser(),
         allow_insecure_ssl=raw.get("allow_insecure_ssl", False),
         obsidian=obsidian,
+        digest=digest,
     )
     return config
 
