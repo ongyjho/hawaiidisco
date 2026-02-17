@@ -34,4 +34,4 @@ def get_provider(ai_config) -> AIProvider:
             )
 
     # Default: claude_cli
-    return ClaudeCLIProvider()
+    return ClaudeCLIProvider(model=ai_config.model)
