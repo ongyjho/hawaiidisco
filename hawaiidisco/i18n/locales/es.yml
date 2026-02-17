@@ -1,0 +1,150 @@
+meta:
+  language: "Espa\u00f1ol"
+  code: es
+  contributors:
+    - name: Hawaii Disco Team
+
+# --- app.py: MemoScreen ---
+cancel: "Cancelar"
+memo_input_help: "Escribir nota (Ctrl+S guardar, Escape cancelar)"
+close: "Cerrar"
+
+# --- app.py: ArticleScreen ---
+browser: "Navegador"
+translate: "Traducir"
+original: "Original"
+loading_body: "Cargando art\u00edculo..."
+translation_tab: "Traducci\u00f3n"
+press_t_to_translate: "Pulsa t para traducir"
+translating: "Traduciendo..."
+insight_tab: "An\u00e1lisis"
+press_i_for_insight: "Pulsa i para generar an\u00e1lisis"
+
+# --- app.py: AddFeedScreen ---
+add_feed_help: "A\u00f1adir fuente (Enter siguiente/confirmar, Escape cancelar)"
+rss_url_placeholder: "RSS URL (ej. https://example.com/feed.xml)"
+feed_name_placeholder: "Nombre de la fuente (ej. GeekNews)"
+invalid_url_scheme: "La URL debe empezar con http:// o https://"
+
+# --- app.py: SearchScreen ---
+search_help: "Introducir b\u00fasqueda (Enter confirmar, Escape cancelar)"
+search_placeholder: "Buscar art\u00edculos..."
+
+# --- app.py: HawaiiDiscoApp status messages ---
+refreshing: "Actualizando..."
+new_articles_found: "{count} art\u00edculo(s) nuevo(s)"
+no_new_articles: "No hay art\u00edculos nuevos"
+claude_cli_not_found: "Claude CLI no encontrado"
+generating_insight: "Generando an\u00e1lisis..."
+bookmark_added: "\u2605 Guardado: {title}"
+bookmark_removed: "Eliminado de guardados: {title}"
+bookmark_first: "Primero guarda el art\u00edculo"
+memo_saved: "Nota guardada"
+searching: "B\u00fasqueda: {query}"
+search_no_results: "Sin resultados para '{query}' (Escape para limpiar)"
+search_cleared: "B\u00fasqueda limpiada"
+bookmarks_only: "\u2605 Solo guardados"
+feed_added: "Fuente a\u00f1adida: {name}"
+already_translated: "Ya traducido (ver en panel de detalles)"
+translated_preview: "Traducido: {title}"
+translation_failed: "La traducci\u00f3n fall\u00f3. Int\u00e9ntalo de nuevo."
+
+# --- OPML ---
+opml_import_help: "Ruta del archivo OPML (Enter confirmar, Escape cancelar)"
+opml_path_placeholder: "Ruta al archivo .opml"
+opml_import_success: "{count} fuente(s) importada(s) desde OPML"
+opml_import_empty: "No se encontraron fuentes en el archivo OPML"
+opml_import_error: "Error al importar OPML: {error}"
+opml_export_success: "Fuentes exportadas a {path}"
+opml_export_error: "Error al exportar OPML: {error}"
+opml_no_feeds: "No hay fuentes para exportar"
+opml_import: "Importar OPML"
+opml_export: "Exportar OPML"
+
+# --- Feed delete ---
+confirm_delete_feed: "\u00bfEliminar fuente '{name}'? ({count} art\u00edculos ser\u00e1n eliminados)"
+confirm_delete_hint: "y: confirmar / n o Esc: cancelar"
+feed_deleted: "Fuente eliminada: {name} ({count} art\u00edculos eliminados)"
+
+# --- Feed filter ---
+feed_filter_active: "Fuente: {name}"
+feed_filter_cleared: "Filtro de fuente limpiado"
+
+# --- FeedListScreen / BookmarkListScreen ---
+feed_list_title: "Fuentes suscritas"
+no_feeds: "No hay fuentes configuradas. Pulsa 'a' para a\u00f1adir."
+article_count: "{count} art\u00edculos"
+feeds: "Fuentes"
+bookmark_list_title: "Art\u00edculos guardados"
+no_bookmarks: "No hay art\u00edculos guardados."
+bookmarks_label: "Guardados"
+
+# --- BookmarkListScreen: AI analysis ---
+bookmark_analysis_title: "An\u00e1lisis de guardados (\u00daltimos 7 d\u00edas)"
+generating_bookmark_analysis: "Generando an\u00e1lisis de guardados..."
+bookmark_analysis_complete: "An\u00e1lisis de guardados completado"
+bookmark_analysis_failed: "Error en el an\u00e1lisis de guardados"
+no_recent_bookmarks: "No hay guardados en los \u00faltimos 7 d\u00edas."
+bookmark_articles_section: "Art\u00edculos guardados"
+
+# --- widgets/status.py ---
+nav_move: "\u2191\u2193 Mover"
+read: "Leer"
+insight: "An\u00e1lisis"
+bookmark: "Guardar"
+refresh: "Actualizar"
+search: "Buscar"
+filter: "Filtrar"
+add_feed: "A\u00f1adir fuente"
+quit: "Salir"
+last_refresh: "\u00daltima actualizaci\u00f3n: {time}"
+
+# --- widgets/detail.py ---
+select_article: "Selecciona un art\u00edculo"
+
+# --- widgets/timeline.py ---
+just_now: "ahora"
+minutes_ago: "hace {n}min"
+hours_ago: "hace {n}h"
+days_ago: "hace {n}d"
+
+# --- reader.py ---
+fetch_error: "No se pudo obtener la p\u00e1gina ({error})"
+extract_error: "No se pudo extraer el contenido."
+truncated: "... (truncado)"
+
+# --- fetcher.py ---
+no_title: "(Sin t\u00edtulo)"
+
+# --- bookmark.py ---
+bm_source: "Fuente"
+bm_date: "Fecha"
+bm_link: "Enlace"
+bm_insight: "An\u00e1lisis"
+bm_memo_section: "## Nota"
+bm_no_memo: "(Sin nota)"
+
+# --- insight.py ---
+insight_failed: "Error al generar an\u00e1lisis"
+
+# --- translate.py ---
+translation_failed_short: "Traducci\u00f3n fallida"
+
+# --- Tag ---
+tag_edit_help: "Introduce etiquetas separadas por comas (Enter guardar, Escape cancelar)"
+tag_placeholder: "ej. tech, python, ai"
+tag_saved: "Etiquetas guardadas"
+tag_list_title: "Etiquetas"
+no_tags: "No hay etiquetas. Pulsa 'c' en un art\u00edculo guardado para a\u00f1adir."
+tag_count: "{count} art\u00edculos"
+tag_filter_active: "Etiqueta: {tag}"
+tag_filter_cleared: "Filtro de etiqueta limpiado"
+bookmark_first_for_tag: "Guarda el art\u00edculo primero para a\u00f1adir etiquetas"
+tags_label: "Etiquetas"
+
+# --- Theme ---
+theme_list_title: "Seleccionar tema"
+theme_applied: "Tema: {name}"
+theme_dark: "oscuro"
+theme_light: "claro"
+theme_label: "Tema"

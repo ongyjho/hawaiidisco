@@ -1,0 +1,150 @@
+meta:
+  language: English
+  code: en
+  contributors:
+    - name: Hawaii Disco Team
+
+# --- app.py: MemoScreen ---
+cancel: "Cancel"
+memo_input_help: "Enter memo (Ctrl+S save, Escape cancel)"
+close: "Close"
+
+# --- app.py: ArticleScreen ---
+browser: "Browser"
+translate: "Translate"
+original: "Original"
+loading_body: "Loading article..."
+translation_tab: "Translation"
+press_t_to_translate: "Press t to translate"
+translating: "Translating..."
+insight_tab: "Insight"
+press_i_for_insight: "Press i to generate insight"
+
+# --- app.py: AddFeedScreen ---
+add_feed_help: "Add feed (Enter next/confirm, Escape cancel)"
+rss_url_placeholder: "RSS URL (e.g. https://example.com/feed.xml)"
+feed_name_placeholder: "Feed name (e.g. GeekNews)"
+invalid_url_scheme: "URL must start with http:// or https://"
+
+# --- app.py: SearchScreen ---
+search_help: "Enter search query (Enter confirm, Escape cancel)"
+search_placeholder: "Search articles..."
+
+# --- app.py: HawaiiDiscoApp status messages ---
+refreshing: "Refreshing..."
+new_articles_found: "{count} new article(s) found"
+no_new_articles: "No new articles"
+claude_cli_not_found: "Claude CLI not found"
+generating_insight: "Generating insight..."
+bookmark_added: "\u2605 Bookmarked: {title}"
+bookmark_removed: "Bookmark removed: {title}"
+bookmark_first: "Please bookmark first"
+memo_saved: "Memo saved"
+searching: "Search: {query}"
+search_no_results: "No results for '{query}' (Escape to clear)"
+search_cleared: "Search cleared"
+bookmarks_only: "\u2605 Bookmarks only"
+feed_added: "Feed added: {name}"
+already_translated: "Already translated (check detail panel)"
+translated_preview: "Translated: {title}"
+translation_failed: "Translation failed. Please try again."
+
+# --- OPML ---
+opml_import_help: "Enter OPML file path (Enter confirm, Escape cancel)"
+opml_path_placeholder: "Path to .opml file"
+opml_import_success: "{count} feed(s) imported from OPML"
+opml_import_empty: "No feeds found in OPML file"
+opml_import_error: "Failed to import OPML: {error}"
+opml_export_success: "Feeds exported to {path}"
+opml_export_error: "Failed to export OPML: {error}"
+opml_no_feeds: "No feeds to export"
+opml_import: "Import OPML"
+opml_export: "Export OPML"
+
+# --- Feed delete ---
+confirm_delete_feed: "Delete feed '{name}'? ({count} articles will be removed)"
+confirm_delete_hint: "y: confirm / n or Esc: cancel"
+feed_deleted: "Feed deleted: {name} ({count} articles removed)"
+
+# --- Feed filter ---
+feed_filter_active: "Feed: {name}"
+feed_filter_cleared: "Feed filter cleared"
+
+# --- FeedListScreen / BookmarkListScreen ---
+feed_list_title: "Subscribed Feeds"
+no_feeds: "No feeds configured. Press 'a' to add a feed."
+article_count: "{count} articles"
+feeds: "Feeds"
+bookmark_list_title: "Bookmarked Articles"
+no_bookmarks: "No bookmarked articles."
+bookmarks_label: "Bookmarks"
+
+# --- BookmarkListScreen: AI analysis ---
+bookmark_analysis_title: "Bookmark Analysis (Last 7 days)"
+generating_bookmark_analysis: "Generating bookmark analysis..."
+bookmark_analysis_complete: "Bookmark analysis complete"
+bookmark_analysis_failed: "Bookmark analysis failed"
+no_recent_bookmarks: "No bookmarks in the last 7 days."
+bookmark_articles_section: "Bookmarked Articles"
+
+# --- widgets/status.py ---
+nav_move: "\u2191\u2193 Move"
+read: "Read"
+insight: "Insight"
+bookmark: "Bookmark"
+refresh: "Refresh"
+search: "Search"
+filter: "Filter"
+add_feed: "Add feed"
+quit: "Quit"
+last_refresh: "Last refresh: {time}"
+
+# --- widgets/detail.py ---
+select_article: "Select an article"
+
+# --- widgets/timeline.py ---
+just_now: "just now"
+minutes_ago: "{n}m ago"
+hours_ago: "{n}h ago"
+days_ago: "{n}d ago"
+
+# --- reader.py ---
+fetch_error: "Could not fetch page ({error})"
+extract_error: "Could not extract content."
+truncated: "... (truncated)"
+
+# --- fetcher.py ---
+no_title: "(No title)"
+
+# --- bookmark.py ---
+bm_source: "Source"
+bm_date: "Date"
+bm_link: "Link"
+bm_insight: "Insight"
+bm_memo_section: "## Memo"
+bm_no_memo: "(No memo)"
+
+# --- insight.py ---
+insight_failed: "Insight generation failed"
+
+# --- translate.py ---
+translation_failed_short: "Translation failed"
+
+# --- Tag ---
+tag_edit_help: "Enter tags separated by commas (Enter save, Escape cancel)"
+tag_placeholder: "e.g. tech, python, ai"
+tag_saved: "Tags saved"
+tag_list_title: "Tags"
+no_tags: "No tags yet. Press 'c' on a bookmarked article to add tags."
+tag_count: "{count} articles"
+tag_filter_active: "Tag: {tag}"
+tag_filter_cleared: "Tag filter cleared"
+bookmark_first_for_tag: "Bookmark the article first to add tags"
+tags_label: "Tags"
+
+# --- Theme ---
+theme_list_title: "Select Theme"
+theme_applied: "Theme: {name}"
+theme_dark: "dark"
+theme_light: "light"
+theme_label: "Theme"

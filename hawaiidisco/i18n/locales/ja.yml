@@ -1,0 +1,150 @@
+meta:
+  language: "日本語"
+  code: ja
+  contributors:
+    - name: Hawaii Disco Team
+
+# --- app.py: MemoScreen ---
+cancel: "キャンセル"
+memo_input_help: "メモ入力 (Ctrl+S 保存, Escape キャンセル)"
+close: "閉じる"
+
+# --- app.py: ArticleScreen ---
+browser: "ブラウザ"
+translate: "翻訳"
+original: "原文"
+loading_body: "記事を読み込み中..."
+translation_tab: "翻訳"
+press_t_to_translate: "t キーで翻訳"
+translating: "翻訳中..."
+insight_tab: "インサイト"
+press_i_for_insight: "i キーでインサイトを生成"
+
+# --- app.py: AddFeedScreen ---
+add_feed_help: "フィード追加 (Enter 次へ/確定, Escape キャンセル)"
+rss_url_placeholder: "RSS URL (例: https://example.com/feed.xml)"
+feed_name_placeholder: "フィード名 (例: GeekNews)"
+invalid_url_scheme: "URLは http:// または https:// で始まる必要があります"
+
+# --- app.py: SearchScreen ---
+search_help: "検索語入力 (Enter 確定, Escape キャンセル)"
+search_placeholder: "記事を検索..."
+
+# --- app.py: HawaiiDiscoApp status messages ---
+refreshing: "更新中..."
+new_articles_found: "新着記事 {count}件"
+no_new_articles: "新着記事なし"
+claude_cli_not_found: "Claude CLIが見つかりません"
+generating_insight: "インサイト生成中..."
+bookmark_added: "\u2605 ブックマーク追加: {title}"
+bookmark_removed: "ブックマーク解除: {title}"
+bookmark_first: "先にブックマークしてください"
+memo_saved: "メモ保存完了"
+searching: "検索: {query}"
+search_no_results: "'{query}' の検索結果なし (Escapeで解除)"
+search_cleared: "検索解除"
+bookmarks_only: "\u2605 ブックマークのみ"
+feed_added: "フィード追加: {name}"
+already_translated: "翻訳済み (詳細パネルで確認)"
+translated_preview: "翻訳: {title}"
+translation_failed: "翻訳に失敗しました。もう一度お試しください。"
+
+# --- OPML ---
+opml_import_help: "OPMLファイルパス入力 (Enter 確定, Escape キャンセル)"
+opml_path_placeholder: ".opml ファイルパス"
+opml_import_success: "OPMLから {count}件のフィードをインポート"
+opml_import_empty: "OPMLファイルにフィードが見つかりません"
+opml_import_error: "OPMLインポート失敗: {error}"
+opml_export_success: "フィードを {path} にエクスポートしました"
+opml_export_error: "OPMLエクスポート失敗: {error}"
+opml_no_feeds: "エクスポートするフィードがありません"
+opml_import: "OPMLインポート"
+opml_export: "OPMLエクスポート"
+
+# --- Feed delete ---
+confirm_delete_feed: "フィード '{name}' を削除しますか？ ({count}件の記事が削除されます)"
+confirm_delete_hint: "y: 確定 / n または Esc: キャンセル"
+feed_deleted: "フィード削除: {name} ({count}件の記事を削除)"
+
+# --- Feed filter ---
+feed_filter_active: "フィード: {name}"
+feed_filter_cleared: "フィードフィルター解除"
+
+# --- FeedListScreen / BookmarkListScreen ---
+feed_list_title: "購読フィード一覧"
+no_feeds: "フィードが設定されていません。'a' を押して追加してください。"
+article_count: "{count}件の記事"
+feeds: "フィード一覧"
+bookmark_list_title: "ブックマーク一覧"
+no_bookmarks: "ブックマークされた記事はありません。"
+bookmarks_label: "ブックマーク"
+
+# --- BookmarkListScreen: AI analysis ---
+bookmark_analysis_title: "ブックマーク分析 (直近7日間)"
+generating_bookmark_analysis: "ブックマーク分析を生成中..."
+bookmark_analysis_complete: "ブックマーク分析完了"
+bookmark_analysis_failed: "ブックマーク分析に失敗しました"
+no_recent_bookmarks: "直近7日間のブックマークはありません。"
+bookmark_articles_section: "ブックマーク一覧"
+
+# --- widgets/status.py ---
+nav_move: "\u2191\u2193 移動"
+read: "読む"
+insight: "インサイト"
+bookmark: "ブックマーク"
+refresh: "更新"
+search: "検索"
+filter: "フィルター"
+add_feed: "フィード追加"
+quit: "終了"
+last_refresh: "最終更新: {time}"
+
+# --- widgets/detail.py ---
+select_article: "記事を選択してください"
+
+# --- widgets/timeline.py ---
+just_now: "たった今"
+minutes_ago: "{n}分前"
+hours_ago: "{n}時間前"
+days_ago: "{n}日前"
+
+# --- reader.py ---
+fetch_error: "ページを取得できません ({error})"
+extract_error: "本文を抽出できません。"
+truncated: "... (省略)"
+
+# --- fetcher.py ---
+no_title: "(タイトルなし)"
+
+# --- bookmark.py ---
+bm_source: "ソース"
+bm_date: "日付"
+bm_link: "リンク"
+bm_insight: "インサイト"
+bm_memo_section: "## メモ"
+bm_no_memo: "(メモなし)"
+
+# --- insight.py ---
+insight_failed: "インサイト生成に失敗しました"
+
+# --- translate.py ---
+translation_failed_short: "翻訳失敗"
+
+# --- Tag ---
+tag_edit_help: "タグをカンマ区切りで入力 (Enter 保存, Escape キャンセル)"
+tag_placeholder: "例: tech, python, ai"
+tag_saved: "タグ保存完了"
+tag_list_title: "タグ一覧"
+no_tags: "タグがありません。ブックマーク記事で 'c' を押してタグを追加してください。"
+tag_count: "{count}件の記事"
+tag_filter_active: "タグ: {tag}"
+tag_filter_cleared: "タグフィルター解除"
+bookmark_first_for_tag: "タグを追加するには先にブックマークしてください"
+tags_label: "タグ"
+
+# --- Theme ---
+theme_list_title: "テーマ選択"
+theme_applied: "テーマ: {name}"
+theme_dark: "ダーク"
+theme_light: "ライト"
+theme_label: "テーマ"

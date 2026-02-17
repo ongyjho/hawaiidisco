@@ -101,7 +101,7 @@ class TestTranslateTextTimeout:
     def test_unsupported_lang_returns_none(self) -> None:
         """지원하지 않는 언어 코드(TRANSLATABLE_LANGS 외)는 None을 반환한다."""
         provider = _make_mock_provider()
-        result = translate_text("hello world", provider, lang="ja")
+        result = translate_text("hello world", provider, lang="fr")
         assert result is None
         provider.generate.assert_not_called()
 
@@ -228,7 +228,7 @@ class TestTranslateArticleMeta:
     def test_unsupported_lang_returns_empty(self) -> None:
         """지원하지 않는 언어 코드는 빈 문자열 쌍 반환."""
         provider = _make_mock_provider()
-        title, desc = translate_article_meta("Title", "Desc", provider, lang="ja")
+        title, desc = translate_article_meta("Title", "Desc", provider, lang="fr")
         assert title == ""
         assert desc == ""
         provider.generate.assert_not_called()
@@ -375,8 +375,8 @@ class TestGetLangName:
 
     def test_unknown_language_returns_code(self) -> None:
         """알 수 없는 언어 코드는 코드 자체를 반환한다."""
-        assert get_lang_name("ja") == "ja"
         assert get_lang_name("fr") == "fr"
+        assert get_lang_name("pt") == "pt"
 
 
 class TestTranslatableLangs:
