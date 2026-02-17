@@ -974,7 +974,10 @@ class HawaiiDiscoApp(App):
     @work(thread=True)
     def _do_refresh(self) -> None:
         """Fetch feeds in the background."""
-        status = self.query_one(StatusBar)
+        try:
+            status = self.query_one(StatusBar)
+        except NoMatches:
+            return
         self.call_from_thread(status.set_message, t("refreshing"))
 
         new_count = fetch_all_feeds(self.config.feeds, self.db, allow_insecure_ssl=self.config.allow_insecure_ssl)
@@ -1007,7 +1010,10 @@ class HawaiiDiscoApp(App):
             )
         # 태그 정보를 일괄 조회하여 Timeline에 전달
         all_tags = self.db.get_all_bookmark_tags()
-        timeline = self.query_one(Timeline)
+        try:
+            timeline = self.query_one(Timeline)
+        except NoMatches:
+            return
         timeline.refresh_articles(articles, all_tags)
 
     def action_read_article(self) -> None:
@@ -1268,16 +1274,16 @@ class HawaiiDiscoApp(App):
         )
 
         result = self.ai.generate(prompt, timeout=60)
+        try:
+            status = self.query_one(StatusBar)
+        except NoMatches:
+            return
         if result:
             self.call_from_thread(screen.update_analysis, result)
-            self.call_from_thread(
-                self.query_one(StatusBar).set_message, t("bookmark_analysis_complete")
-            )
+            self.call_from_thread(status.set_message, t("bookmark_analysis_complete"))
         else:
             self.call_from_thread(screen.update_analysis, t("bookmark_analysis_failed"))
-            self.call_from_thread(
-                self.query_one(StatusBar).set_message, t("bookmark_analysis_failed")
-            )
+            self.call_from_thread(status.set_message, t("bookmark_analysis_failed"))
 
     def _on_bookmark_list_result(self, article_id: str | None) -> None:
         """Open the article selected from the bookmark list."""
@@ -1422,7 +1428,10 @@ class HawaiiDiscoApp(App):
 
     @work(thread=True)
     def _do_translate(self, article: Article) -> None:
-        status = self.query_one(StatusBar)
+        try:
+            status = self.query_one(StatusBar)
+        except NoMatches:
+            return
         self.call_from_thread(status.set_message, t("translating"))
 
         t_title, t_desc = translate_article_meta(article.title, article.description, self.ai)
@@ -1477,7 +1486,10 @@ class HawaiiDiscoApp(App):
     # --- Utilities ---
 
     def _get_current_article(self) -> Article | None:
-        timeline = self.query_one(Timeline)
+        try:
+            timeline = self.query_one(Timeline)
+        except NoMatches:
+            return None
         return timeline.get_highlighted_article()
 
     def _notify_macos(self, message: str) -> None:
