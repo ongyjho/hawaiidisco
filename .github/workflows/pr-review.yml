@@ -1,0 +1,56 @@
+name: PR Review
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+  issue_comment:
+    types: [created]
+
+jobs:
+  review:
+    if: |
+      (github.event_name == 'pull_request') ||
+      (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@claude'))
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+
+      - uses: anthropics/claude-code-action@beta
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          direct_prompt: |
+            이 PR을 아래 기준으로 리뷰해주세요:
+
+            ## 코드 품질
+            - 버그, 보안 취약점, 성능 이슈
+            - 코드 스타일 (ruff py311, line-length=120)
+            - 타입 힌트 일관성 (from __future__ import annotations)
+            - 기존 패턴/컨벤션과의 일관성
+
+            ## 테스트
+            - 변경된 코드에 대한 테스트 커버리지
+            - 엣지 케이스 누락 여부
+            - 테스트 네이밍 컨벤션
+
+            ## 문서
+            - CLAUDE.md 업데이트 필요 여부
+            - docstring/주석 적절성
+            - CHANGELOG 항목 필요 여부
+
+            간결하게 핵심만 지적해주세요. 사소한 스타일 이슈보다 실질적 문제에 집중해주세요.
