@@ -32,6 +32,7 @@ Be concise and focus on substantive issues. Skip trivial style nits.
 
 Respond ONLY in the following JSON format, with no other text:
 {
+  "verdict": "approve | request_changes",
   "review": "Review body in markdown",
   "suggestions": [
     {
@@ -43,9 +44,9 @@ Respond ONLY in the following JSON format, with no other text:
 }
 
 Rules:
+- verdict: "approve" if the PR is safe to ship as-is, "request_changes" if there are blocking issues that must be fixed before merge
 - suggestions should only include substantive, important items (skip trivial style issues)
-- If there are no issues, set suggestions to an empty array
-- If there are no issues, set review to "LGTM"
+- If there are no blocking issues, set verdict to "approve" and suggestions to an empty array
 - All output must be in English
 """
 
@@ -86,13 +87,22 @@ def call_openai(api_key: str, diff: str) -> dict:
     return json.loads(content)
 
 
+VERDICTS = {
+    "approve": "\u2705 **LGTM — Safe to ship**",
+    "request_changes": "\u274c **Changes requested — Do NOT merge yet**",
+}
+
+
 def write_review(review_data: dict, output_path: str) -> None:
     """Write the review comment body to a file."""
+    verdict = review_data.get("verdict", "approve")
     review_text = review_data.get("review", "LGTM")
     suggestions = review_data.get("suggestions", [])
 
+    verdict_line = VERDICTS.get(verdict, VERDICTS["request_changes"])
+
     with open(output_path, "w") as f:
-        f.write("## \U0001f916 AI Code Review\n\n")
+        f.write(f"## \U0001f916 AI Code Review\n\n{verdict_line}\n\n---\n\n")
         f.write(review_text)
         if suggestions:
             f.write(f"\n\n---\n\U0001f4cb **{len(suggestions)} suggestion(s) will be filed as GitHub issues.**")
