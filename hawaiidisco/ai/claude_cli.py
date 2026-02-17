@@ -1,8 +1,11 @@
 """Claude CLI-based AI Provider."""
 from __future__ import annotations
 
+import logging
 import shutil
 import subprocess
+
+logger = logging.getLogger(__name__)
 
 
 class ClaudeCLIProvider:
@@ -10,12 +13,15 @@ class ClaudeCLIProvider:
 
     _available: bool | None = None
 
+    def __init__(self, model: str = "") -> None:
+        self._model = model or "haiku"
+
     def generate(self, prompt: str, *, timeout: int = 30, max_tokens: int = 4096) -> str | None:
         """Generate text using the Claude CLI."""
         if not self.is_available():
             return None
         try:
-            cmd = ["claude", "-p", prompt, "--max-tokens", str(max_tokens)]
+            cmd = ["claude", "-p", prompt, "--model", self._model]
             result = subprocess.run(
                 cmd,
                 capture_output=True,
@@ -24,8 +30,10 @@ class ClaudeCLIProvider:
             )
             if result.returncode == 0 and result.stdout.strip():
                 return result.stdout.strip()
+            if result.returncode != 0:
+                logger.debug("Claude CLI failed (rc=%d): %s", result.returncode, result.stderr.strip())
         except (subprocess.TimeoutExpired, FileNotFoundError, OSError):
-            pass
+            logger.debug("Claude CLI error", exc_info=True)
         return None
 
     def is_available(self) -> bool:
