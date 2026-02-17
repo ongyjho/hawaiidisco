@@ -17,11 +17,25 @@ jobs:
       pull-requests: write
       issues: write
     steps:
+      - name: Check for API key
+        id: check
+        env:
+          HAS_KEY: ${{ secrets.OPENAI_API_KEY != '' }}
+        run: |
+          if [ "$HAS_KEY" != "true" ]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "::warning::OPENAI_API_KEY not configured — skipping AI review."
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - uses: actions/checkout@v4
+        if: steps.check.outputs.skip != 'true'
         with:
           fetch-depth: 0
 
       - name: Get PR diff
+        if: steps.check.outputs.skip != 'true'
         id: pr
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -37,11 +51,13 @@ jobs:
           head -c 100000 /tmp/pr_diff.txt > /tmp/pr_diff_truncated.txt
 
       - name: Review with OpenAI
+        if: steps.check.outputs.skip != 'true'
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: python3 .github/scripts/openai_review.py
 
       - name: Post review comment
+        if: steps.check.outputs.skip != 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
