@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.3.2](https://github.com/ongyjho/hawaiidisco/compare/v0.3.1...v0.3.2) (2026-02-17)
+
+
+### Bug Fixes
+
+* add missing imports in app.py after module decomposition ([#30](https://github.com/ongyjho/hawaiidisco/issues/30)) ([a22bb70](https://github.com/ongyjho/hawaiidisco/commit/a22bb706ee63f9776c3249025e36a146eb3cb554))
+* replace --max-tokens with --model for Claude CLI 2.x ([4add307](https://github.com/ongyjho/hawaiidisco/commit/4add30783d097067e946f6b88cf0f7ed83106954))
+* replace removed --max-tokens with --model for Claude CLI 2.x ([e023f5a](https://github.com/ongyjho/hawaiidisco/commit/e023f5a8ffd07468cab0cc4ff91462d6bd97c020))
+* use notify() instead of StatusBar query in digest Obsidian save ([#31](https://github.com/ongyjho/hawaiidisco/issues/31)) ([1e0ba1c](https://github.com/ongyjho/hawaiidisco/commit/1e0ba1c50e878e622c9105548aaafe6d6b8d36af))
+
 ## [0.3.1](https://github.com/ongyjho/hawaiidisco/compare/v0.3.0...v0.3.1) (2026-02-17)
 
 
