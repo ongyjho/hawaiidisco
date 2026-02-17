@@ -10,13 +10,14 @@ class ClaudeCLIProvider:
 
     _available: bool | None = None
 
-    def generate(self, prompt: str, *, timeout: int = 30) -> str | None:
+    def generate(self, prompt: str, *, timeout: int = 30, max_tokens: int = 4096) -> str | None:
         """Generate text using the Claude CLI."""
         if not self.is_available():
             return None
         try:
+            cmd = ["claude", "-p", prompt, "--max-tokens", str(max_tokens)]
             result = subprocess.run(
-                ["claude", "-p", prompt],
+                cmd,
                 capture_output=True,
                 text=True,
                 timeout=timeout,

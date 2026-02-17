@@ -22,7 +22,7 @@ class AnthropicProvider:
             self._client = anthropic.Anthropic(api_key=self._api_key)
         return self._client
 
-    def generate(self, prompt: str, *, timeout: int = 30) -> str | None:
+    def generate(self, prompt: str, *, timeout: int = 30, max_tokens: int = 4096) -> str | None:
         """Generate text using the Anthropic API."""
         if not self.is_available():
             return None
@@ -30,7 +30,7 @@ class AnthropicProvider:
             client = self._get_client()
             message = client.messages.create(
                 model=self._model,
-                max_tokens=1024,
+                max_tokens=max_tokens,
                 messages=[{"role": "user", "content": prompt}],
                 timeout=timeout,
             )
