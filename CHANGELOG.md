@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.0](https://github.com/ongyjho/hawaiidisco/compare/v0.4.0...v0.5.0) (2026-02-17)
+
+
+### Features
+
+* make insight and digest prompts domain-aware for non-tech articles ([#36](https://github.com/ongyjho/hawaiidisco/issues/36)) ([12d89d9](https://github.com/ongyjho/hawaiidisco/commit/12d89d9c188be5740dafc23670aea05d5f656835))
+
 ## [0.4.0](https://github.com/ongyjho/hawaiidisco/compare/v0.3.2...v0.4.0) (2026-02-17)
 
 
